@@ -21,6 +21,13 @@
 - Cliquer **Run**
 - Vérifier: "Success. No rows returned"
 
+**Migration 3 - Account Management:**
+- New query
+- Copier le contenu de `supabase/migrations/004_add_account_status.sql`
+- Coller dans SQL Editor
+- Cliquer **Run**
+- Vérifier: "Success. No rows returned"
+
 ---
 
 ### ✅ Étape 2: Email Templates (3 min)
@@ -124,6 +131,16 @@ Si absentes, les ajouter et **Save**.
    - FAB (bouton +) en bas à droite ✅
    - Tout responsive ✅
 
+### Test 6: Gestion de compte
+1. Aller dans `/settings`
+2. Descendre à "Gestion du compte"
+3. Tester "Mettre en veille":
+   - Cliquer → Confirmer
+   - Déconnexion automatique ✅
+4. Se reconnecter
+5. Page de réactivation affichée ✅
+6. Cliquer "Réactiver" → Accès au feed ✅
+
 ---
 
 ## 📊 Tables créées
@@ -131,6 +148,8 @@ Si absentes, les ajouter et **Save**.
 Après les migrations, vous devriez avoir:
 - ✅ `bookmarks` (favoris)
 - ✅ `notifications` (notifications)
+- ✅ `profiles.account_status` (statut du compte: active/deactivated/deleted)
+- ✅ `profiles.deactivated_at` (date de désactivation)
 
 Vérifier dans **Database → Tables**
 
@@ -185,7 +204,8 @@ Toutes les fonctionnalités sont maintenant opérationnelles:
 - ✅ Notifications temps réel
 - ✅ Interface mobile optimisée
 - ✅ Dark mode
+- ✅ Gestion de compte (désactivation/suppression)
 
-**Temps total: ~10 minutes**
+**Temps total: ~10-15 minutes**
 
 Si tout fonctionne, vous pouvez déployer sur Vercel! 🚀
