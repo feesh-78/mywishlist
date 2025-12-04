@@ -134,7 +134,7 @@ export default function LoginPage() {
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <Link
-          href="/reset-password"
+          href="/forgot-password"
           className="text-sm text-muted-foreground hover:text-primary text-center"
         >
           Mot de passe oublié ?
@@ -142,7 +142,7 @@ export default function LoginPage() {
         <div className="text-sm text-muted-foreground text-center">
           Pas encore de compte ?{' '}
           <Link href="/signup" className="text-primary hover:underline">
-            S&apos;inscrire
+            {"S'inscrire"}
           </Link>
         </div>
       </CardFooter>

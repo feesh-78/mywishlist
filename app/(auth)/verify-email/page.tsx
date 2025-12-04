@@ -96,7 +96,7 @@ function VerifyEmailContent() {
             <div className="text-sm">
               <p className="font-medium mb-1">Vérifiez votre boîte de réception</p>
               <p className="text-muted-foreground">
-                Cliquez sur le lien de confirmation dans l'email pour activer votre compte.
+                {"Cliquez sur le lien de confirmation dans l'email pour activer votre compte."}
               </p>
             </div>
           </div>
@@ -105,7 +105,7 @@ function VerifyEmailContent() {
             <div className="text-sm">
               <p className="font-medium mb-1">Vérifiez vos spams</p>
               <p className="text-muted-foreground">
-                Si vous ne voyez pas l'email, regardez dans votre dossier spam ou courrier indésirable.
+                {"Si vous ne voyez pas l'email, regardez dans votre dossier spam ou courrier indésirable."}
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ function VerifyEmailContent() {
 
         <div className="text-center pt-2">
           <p className="text-sm text-muted-foreground mb-3">
-            Vous n'avez pas reçu l'email ?
+            {"Vous n'avez pas reçu l'email ?"}
           </p>
           <Button
             onClick={handleResendEmail}
