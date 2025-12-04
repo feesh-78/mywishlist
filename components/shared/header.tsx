@@ -14,13 +14,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/lib/hooks/use-toast';
 import {
   Heart,
   Home,
   PlusSquare,
-  Bell,
   Settings,
   LogOut,
   User,
@@ -28,6 +26,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NotificationCenter } from '@/components/notification-center';
 
 export function Header() {
   const router = useRouter();
@@ -115,15 +114,7 @@ export function Header() {
                 >
                   <PlusSquare className="h-6 w-6" />
                 </Link>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-6 w-6" />
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    3
-                  </Badge>
-                </Button>
+                <NotificationCenter userId={user.id} />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
@@ -179,15 +170,7 @@ export function Header() {
                 <Link href="/wishlists/new">
                   <PlusSquare className="h-6 w-6" />
                 </Link>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-6 w-6" />
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    3
-                  </Badge>
-                </Button>
+                <NotificationCenter userId={user.id} />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
