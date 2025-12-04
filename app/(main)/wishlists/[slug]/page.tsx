@@ -26,6 +26,7 @@ import {
   Settings,
   MoreVertical,
   Bookmark,
+  Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -46,6 +47,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { CollaboratorsDialog } from '@/components/wishlist/collaborators-dialog';
 
 export default function WishlistDetailPage() {
   const params = useParams();
@@ -64,9 +66,15 @@ export default function WishlistDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
   const commentsRef = useRef<HTMLDivElement>(null);
 
   const isOwner = currentUser && wishlist && currentUser.id === wishlist.user_id;
+  const isEditor = collaborators.some(
+    (c) => c.user_id === currentUser?.id && c.role === 'editor' && c.status === 'accepted'
+  );
+  const canEdit = isOwner || isEditor;
 
   useEffect(() => {
     loadWishlist();
@@ -128,6 +136,14 @@ export default function WishlistDetailPage() {
 
         setIsBookmarked(!!bookmarkData);
       }
+
+      // Load collaborators
+      const { data: collaboratorsData } = await supabase
+        .from('wishlist_collaborators')
+        .select('*')
+        .eq('wishlist_id', wishlistData.id);
+
+      setCollaborators(collaboratorsData || []);
     } catch (error) {
       console.error('Error loading wishlist:', error);
     } finally {
@@ -448,37 +464,44 @@ export default function WishlistDetailPage() {
                 <Share2 className="h-4 w-4" />
               </Button>
               {isOwner && (
-                <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/wishlists/${slug}/edit`} className="cursor-pointer">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Paramètres
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setShowDeleteDialog(true)}
-                        className="text-red-600 focus:text-red-600 cursor-pointer"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button asChild>
-                    <Link href={`/wishlists/${slug}/items/new`}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter un item
-                    </Link>
-                  </Button>
-                </>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => setShowCollaboratorsDialog(true)}
+                      className="cursor-pointer"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Collaborateurs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/wishlists/${slug}/edit`} className="cursor-pointer">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Paramètres
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-red-600 focus:text-red-600 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              {canEdit && (
+                <Button asChild>
+                  <Link href={`/wishlists/${slug}/items/new`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter un item
+                  </Link>
+                </Button>
               )}
             </div>
           </div>
@@ -507,11 +530,11 @@ export default function WishlistDetailPage() {
           <div className="text-4xl mb-4">🎁</div>
           <h3 className="text-lg font-semibold mb-2">Aucun item</h3>
           <p className="text-muted-foreground mb-4">
-            {isOwner
-              ? 'Ajoutez des items à votre wishlist !'
+            {canEdit
+              ? 'Ajoutez des items à cette wishlist !'
               : 'Cette wishlist ne contient pas encore d&apos;items.'}
           </p>
-          {isOwner && (
+          {canEdit && (
             <Button asChild>
               <Link href={`/wishlists/${slug}/items/new`}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -524,7 +547,7 @@ export default function WishlistDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item) => {
             const isReservedByMe = currentUser && item.reserved_by === currentUser.id;
-            const canReserve = !isOwner && (!item.is_reserved || isReservedByMe);
+            const canReserve = !canEdit && (!item.is_reserved || isReservedByMe);
 
             return (
               <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -591,7 +614,7 @@ export default function WishlistDetailPage() {
                       </Button>
                     )}
 
-                    {!isOwner && (
+                    {!canEdit && (
                       <Button
                         variant={isReservedByMe ? 'secondary' : 'default'}
                         size="sm"
@@ -760,6 +783,16 @@ export default function WishlistDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Collaborators dialog */}
+      {wishlist && (
+        <CollaboratorsDialog
+          isOpen={showCollaboratorsDialog}
+          onClose={() => setShowCollaboratorsDialog(false)}
+          wishlistId={wishlist.id}
+          wishlistOwnerId={wishlist.user_id}
+        />
+      )}
     </div>
   );
 }
