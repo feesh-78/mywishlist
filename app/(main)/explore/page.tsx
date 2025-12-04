@@ -198,12 +198,12 @@ export default function ExplorePage() {
         <Card>
           <CardContent className="p-6 text-center">
             <div className="text-4xl mb-3">🎁</div>
-            <h3 className="font-semibold mb-2">Créer ma wishlist</h3>
+            <h3 className="font-semibold mb-2">Créer une liste</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Partagez vos envies avec vos proches
+              Wishlist ou shopping list, à vous de choisir !
             </p>
             <Button asChild className="w-full">
-              <Link href="/wishlists/new">Commencer</Link>
+              <Link href="/lists/new">Commencer</Link>
             </Button>
           </CardContent>
         </Card>

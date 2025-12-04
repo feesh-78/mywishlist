@@ -380,8 +380,8 @@ export default function FeedPage() {
                   : 'Soyez le premier à partager un produit !'}
               </p>
               <Button asChild>
-                <Link href={feedType === 'following' ? '/search?type=users' : '/wishlists/new'}>
-                  {feedType === 'following' ? 'Trouver des utilisateurs' : 'Partager un produit'}
+                <Link href={feedType === 'following' ? '/search?type=users' : '/lists/new'}>
+                  {feedType === 'following' ? 'Trouver des utilisateurs' : 'Créer une liste'}
                 </Link>
               </Button>
             </div>

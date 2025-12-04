@@ -331,7 +331,7 @@ export default function ProfilePage() {
               </p>
               {isOwnProfile && (
                 <Button asChild>
-                  <Link href="/wishlists/new">Créer une wishlist</Link>
+                  <Link href="/lists/new">Créer une liste</Link>
                 </Button>
               )}
             </div>

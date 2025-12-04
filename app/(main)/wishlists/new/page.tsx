@@ -79,21 +79,25 @@ export default function NewWishlistPage() {
         return;
       }
 
-      // Check if slug already exists for this user
-      const { data: existing } = await supabase
-        .from('wishlists')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('slug', data.slug)
-        .single();
+      // Generate unique slug if needed
+      let finalSlug = data.slug;
+      let counter = 1;
 
-      if (existing) {
-        toast({
-          variant: 'destructive',
-          title: 'Slug déjà utilisé',
-          description: 'Ce nom est déjà utilisé pour une de vos wishlists.',
-        });
-        return;
+      while (true) {
+        const { data: existing } = await supabase
+          .from('wishlists')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('slug', finalSlug)
+          .maybeSingle();
+
+        if (!existing) {
+          break; // Slug is unique
+        }
+
+        // Add counter to slug
+        finalSlug = `${data.slug}-${counter}`;
+        counter++;
       }
 
       // Create wishlist
@@ -103,7 +107,7 @@ export default function NewWishlistPage() {
           user_id: user.id,
           title: data.title,
           description: data.description,
-          slug: data.slug,
+          slug: finalSlug,
           cover_image_url: data.coverImageUrl || null,
           is_public: data.isPublic,
           is_collaborative: data.isCollaborative,
