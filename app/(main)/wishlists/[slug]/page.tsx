@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/use-user';
@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/lib/hooks/use-toast';
 import {
   Heart,
@@ -19,6 +20,7 @@ import {
   ArrowLeft,
   Edit,
   Hash,
+  Send,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,7 +34,11 @@ export default function WishlistDetailPage() {
 
   const [wishlist, setWishlist] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isCommentLoading, setIsCommentLoading] = useState(false);
+  const commentsRef = useRef<HTMLDivElement>(null);
 
   const isOwner = currentUser && wishlist && currentUser.id === wishlist.user_id;
 
@@ -72,10 +78,76 @@ export default function WishlistDetailPage() {
         .order('position', { ascending: true });
 
       setItems(itemsData || []);
+
+      // Load comments
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          profile:profiles(id, username, full_name, avatar_url)
+        `)
+        .eq('wishlist_id', wishlistData.id)
+        .order('created_at', { ascending: false });
+
+      setComments(commentsData || []);
     } catch (error) {
       console.error('Error loading wishlist:', error);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleAddComment() {
+    if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Connexion requise',
+        description: 'Vous devez être connecté pour commenter.',
+      });
+      return;
+    }
+
+    if (!newComment.trim()) {
+      return;
+    }
+
+    setIsCommentLoading(true);
+    const supabase = createClient();
+
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({
+          wishlist_id: wishlist.id,
+          user_id: currentUser.id,
+          content: newComment.trim(),
+        })
+        .select(`
+          *,
+          profile:profiles(id, username, full_name, avatar_url)
+        `)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      setComments((prev) => [data, ...prev]);
+      setNewComment('');
+
+      toast({
+        title: 'Commentaire ajouté',
+        description: 'Votre commentaire a été publié.',
+      });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible d&apos;ajouter le commentaire.',
+      });
+    } finally {
+      setIsCommentLoading(false);
     }
   }
 
@@ -401,6 +473,120 @@ export default function WishlistDetailPage() {
           })}
         </div>
       )}
+
+      {/* Comments Section */}
+      <div ref={commentsRef} id="comments" className="mt-12 scroll-mt-20">
+        <h2 className="text-2xl font-bold mb-6">
+          Commentaires ({comments.length})
+        </h2>
+
+        {/* Add Comment Form */}
+        {currentUser ? (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={currentUser.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    {currentUser.user_metadata?.username?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <Textarea
+                    placeholder="Ajouter un commentaire..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    disabled={isCommentLoading}
+                    rows={3}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleAddComment}
+                      disabled={isCommentLoading || !newComment.trim()}
+                      size="sm"
+                    >
+                      {isCommentLoading ? (
+                        <>Envoi...</>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Publier
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="mb-6">
+            <CardContent className="p-6 text-center">
+              <p className="text-muted-foreground mb-4">
+                Connectez-vous pour commenter cette wishlist
+              </p>
+              <Button asChild>
+                <Link href="/login">Se connecter</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Comments List */}
+        {comments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Aucun commentaire pour le moment. Soyez le premier à commenter !
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {comments.map((comment) => (
+              <Card key={comment.id}>
+                <CardContent className="p-4">
+                  <div className="flex gap-3">
+                    <Link href={`/profile/${comment.profile?.username}`}>
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={comment.profile?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                          {comment.profile?.username?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Link
+                          href={`/profile/${comment.profile?.username}`}
+                          className="font-semibold hover:underline"
+                        >
+                          {comment.profile?.full_name || comment.profile?.username}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          @{comment.profile?.username}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          •
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(comment.created_at).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
