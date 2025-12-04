@@ -46,7 +46,7 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data: authData } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
@@ -58,6 +58,20 @@ export default function LoginPage() {
           description: error.message,
         });
         return;
+      }
+
+      // Check if account is deactivated
+      if (authData.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('account_status')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (profile?.account_status === 'deactivated') {
+          router.push('/reactivate');
+          return;
+        }
       }
 
       toast({
