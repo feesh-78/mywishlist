@@ -36,7 +36,7 @@ export default function NewWishlistPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<CreateWishlistInput>({
+  const form = useForm({
     resolver: zodResolver(createWishlistSchema),
     defaultValues: {
       title: '',
@@ -60,7 +60,7 @@ export default function NewWishlistPage() {
     form.setValue('slug', slug);
   };
 
-  async function onSubmit(data: CreateWishlistInput) {
+  async function onSubmit(data: any) {
     setIsLoading(true);
 
     try {
@@ -245,6 +245,7 @@ export default function NewWishlistPage() {
                         placeholder="Noël, Anniversaire, Mariage..."
                         disabled={isLoading}
                         {...field}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
