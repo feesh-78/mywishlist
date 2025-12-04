@@ -37,14 +37,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect auth routes
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    request.nextUrl.pathname !== '/'
-  ) {
+  // Protect routes - allow auth pages and home page for non-authenticated users
+  const publicRoutes = ['/', '/login', '/signup', '/reset-password'];
+  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
+
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
+    url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
