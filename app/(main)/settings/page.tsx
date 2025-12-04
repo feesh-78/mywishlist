@@ -32,7 +32,6 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/shared/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AccountManagement } from '@/components/account-management';
 
 const profileSchema = z.object({
   username: z
@@ -421,14 +420,6 @@ export default function SettingsPage() {
           </Form>
         </CardContent>
       </Card>
-
-      {/* Account Management Section */}
-      {currentUser && (
-        <div className="pt-8">
-          <h2 className="text-xl font-bold mb-4">Gestion du compte</h2>
-          <AccountManagement userId={currentUser.id} />
-        </div>
-      )}
     </div>
   );
 }

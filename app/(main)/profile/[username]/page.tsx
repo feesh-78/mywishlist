@@ -19,7 +19,8 @@ import {
   Settings,
   UserPlus,
   UserMinus,
-  List
+  List,
+  ShieldAlert
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -219,12 +220,20 @@ export default function ProfilePage() {
                   {/* Actions */}
                   <div className="flex gap-2">
                     {isOwnProfile ? (
-                      <Button variant="outline" asChild>
-                        <Link href="/settings">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Modifier le profil
-                        </Link>
-                      </Button>
+                      <>
+                        <Button variant="outline" asChild>
+                          <Link href="/settings">
+                            <Settings className="h-4 w-4 mr-2" />
+                            Modifier le profil
+                          </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                          <Link href="/account">
+                            <ShieldAlert className="h-4 w-4 mr-2" />
+                            Gérer mon compte
+                          </Link>
+                        </Button>
+                      </>
                     ) : (
                       <Button
                         onClick={handleFollow}
