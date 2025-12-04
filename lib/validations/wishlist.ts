@@ -12,8 +12,8 @@ export const createWishlistSchema = z.object({
     .max(100, 'Le slug ne peut pas dépasser 100 caractères')
     .regex(/^[a-z0-9-]+$/, 'Le slug ne peut contenir que des lettres minuscules, chiffres et tirets'),
   coverImageUrl: z.string().url('URL invalide').optional().or(z.literal('')),
-  isPublic: z.boolean().default(true),
-  isCollaborative: z.boolean().default(false),
+  isPublic: z.boolean().optional().default(true),
+  isCollaborative: z.boolean().optional().default(false),
   eventDate: z.string().datetime().optional().nullable(),
   category: z.string().max(50).optional().nullable(),
 });
