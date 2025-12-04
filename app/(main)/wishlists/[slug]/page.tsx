@@ -24,6 +24,7 @@ import {
   Trash2,
   Settings,
   MoreVertical,
+  Bookmark,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -60,6 +61,7 @@ export default function WishlistDetailPage() {
   const [isCommentLoading, setIsCommentLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
 
   const isOwner = currentUser && wishlist && currentUser.id === wishlist.user_id;
@@ -112,6 +114,18 @@ export default function WishlistDetailPage() {
         .order('created_at', { ascending: false });
 
       setComments(commentsData || []);
+
+      // Check if bookmarked
+      if (currentUser) {
+        const { data: bookmarkData } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .eq('wishlist_id', wishlistData.id)
+          .single();
+
+        setIsBookmarked(!!bookmarkData);
+      }
     } catch (error) {
       console.error('Error loading wishlist:', error);
     } finally {
@@ -288,6 +302,58 @@ export default function WishlistDetailPage() {
     }
   }
 
+  async function handleBookmark() {
+    if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Connexion requise',
+        description: 'Vous devez être connecté pour ajouter en favoris.',
+      });
+      return;
+    }
+
+    if (!wishlist) return;
+
+    const supabase = createClient();
+
+    try {
+      if (isBookmarked) {
+        // Remove bookmark
+        await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('user_id', currentUser.id)
+          .eq('wishlist_id', wishlist.id);
+
+        setIsBookmarked(false);
+        toast({
+          title: 'Retiré des favoris',
+          description: 'La wishlist a été retirée de vos favoris.',
+        });
+      } else {
+        // Add bookmark
+        await supabase.from('bookmarks').insert({
+          user_id: currentUser.id,
+          wishlist_id: wishlist.id,
+          item_id: null,
+        });
+
+        setIsBookmarked(true);
+        toast({
+          title: 'Ajouté aux favoris',
+          description: 'La wishlist a été ajoutée à vos favoris.',
+        });
+      }
+    } catch (error) {
+      console.error('Error bookmarking wishlist:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible de modifier les favoris.',
+      });
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -376,6 +442,18 @@ export default function WishlistDetailPage() {
 
             {/* Actions */}
             <div className="flex gap-2 items-start">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleBookmark}
+                title={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              >
+                <Bookmark
+                  className={`h-4 w-4 ${
+                    isBookmarked ? 'fill-yellow-500 text-yellow-500' : ''
+                  }`}
+                />
+              </Button>
               <Button variant="outline" size="icon" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
               </Button>

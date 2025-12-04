@@ -22,11 +22,13 @@ export default function FeedPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [feedType, setFeedType] = useState<FeedType>('all');
   const [likedWishlists, setLikedWishlists] = useState<Set<string>>(new Set());
+  const [bookmarkedWishlists, setBookmarkedWishlists] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadWishlists();
     if (currentUser) {
       loadLikedWishlists();
+      loadBookmarkedWishlists();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedType, currentUser]);
@@ -42,6 +44,21 @@ export default function FeedPage() {
 
     if (data) {
       setLikedWishlists(new Set(data.map((like) => like.wishlist_id)));
+    }
+  }
+
+  async function loadBookmarkedWishlists() {
+    if (!currentUser) return;
+
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('bookmarks')
+      .select('wishlist_id')
+      .eq('user_id', currentUser.id)
+      .not('wishlist_id', 'is', null);
+
+    if (data) {
+      setBookmarkedWishlists(new Set(data.map((bookmark) => bookmark.wishlist_id)));
     }
   }
 
@@ -191,6 +208,62 @@ export default function FeedPage() {
     }
   }
 
+  async function handleBookmark(wishlistId: string, isBookmarked: boolean) {
+    if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Connexion requise',
+        description: 'Vous devez être connecté pour ajouter une wishlist en favoris.',
+      });
+      return;
+    }
+
+    const supabase = createClient();
+
+    try {
+      if (isBookmarked) {
+        // Remove bookmark
+        await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('user_id', currentUser.id)
+          .eq('wishlist_id', wishlistId);
+
+        setBookmarkedWishlists((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(wishlistId);
+          return newSet;
+        });
+
+        toast({
+          title: 'Retiré des favoris',
+          description: 'La wishlist a été retirée de vos favoris.',
+        });
+      } else {
+        // Add bookmark
+        await supabase.from('bookmarks').insert({
+          user_id: currentUser.id,
+          wishlist_id: wishlistId,
+          item_id: null,
+        });
+
+        setBookmarkedWishlists((prev) => new Set(prev).add(wishlistId));
+
+        toast({
+          title: 'Ajouté aux favoris',
+          description: 'La wishlist a été ajoutée à vos favoris.',
+        });
+      }
+    } catch (error) {
+      console.error('Error bookmarking wishlist:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Impossible de modifier les favoris.',
+      });
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -251,6 +324,7 @@ export default function FeedPage() {
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
               {wishlists.map((wishlist) => {
                 const isLiked = likedWishlists.has(wishlist.id);
+                const isBookmarked = bookmarkedWishlists.has(wishlist.id);
                 const likesCount = wishlist.likes?.[0]?.count || 0;
                 const commentsCount = wishlist.comments?.[0]?.count || 0;
 
@@ -347,8 +421,17 @@ export default function FeedPage() {
                           >
                             <Share2 className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Bookmark className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleBookmark(wishlist.id, isBookmarked)}
+                          >
+                            <Bookmark
+                              className={`h-4 w-4 ${
+                                isBookmarked ? 'fill-yellow-500 text-yellow-500' : ''
+                              }`}
+                            />
                           </Button>
                         </div>
                       </div>
