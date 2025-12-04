@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
-import { createWishlistSchema, type CreateWishlistInput } from '@/lib/validations/wishlist';
+import { updateWishlistSchema } from '@/lib/validations/wishlist';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -33,17 +33,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
-export default function NewWishlistPage() {
+export default function EditWishlistPage() {
+  const params = useParams();
   const router = useRouter();
+  const slug = params.slug as string;
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [wishlist, setWishlist] = useState<any>(null);
 
   const form = useForm({
-    resolver: zodResolver(createWishlistSchema),
+    resolver: zodResolver(updateWishlistSchema),
     defaultValues: {
       title: '',
       description: '',
-      slug: '',
       coverImageUrl: '',
       isPublic: true,
       visibility: 'public' as 'public' | 'private' | 'followers' | 'friends' | 'custom',
@@ -52,71 +55,98 @@ export default function NewWishlistPage() {
     },
   });
 
-  // Auto-generate slug from title
-  const handleTitleChange = (value: string) => {
-    const slug = value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    form.setValue('slug', slug);
-  };
+  useEffect(() => {
+    loadWishlist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  async function loadWishlist() {
+    const supabase = createClient();
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      // Load wishlist
+      const { data: wishlistData, error } = await supabase
+        .from('wishlists')
+        .select('*')
+        .eq('slug', slug)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error || !wishlistData) {
+        toast({
+          variant: 'destructive',
+          title: 'Erreur',
+          description: 'Wishlist introuvable ou accès refusé.',
+        });
+        router.push('/feed');
+        return;
+      }
+
+      setWishlist(wishlistData);
+
+      // Set form values
+      form.reset({
+        title: wishlistData.title,
+        description: wishlistData.description || '',
+        coverImageUrl: wishlistData.cover_image_url || '',
+        isPublic: wishlistData.is_public,
+        visibility: wishlistData.visibility || 'public',
+        isCollaborative: wishlistData.is_collaborative,
+        category: wishlistData.category || '',
+      });
+    } catch (error) {
+      console.error('Error loading wishlist:', error);
+      router.push('/feed');
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function onSubmit(data: any) {
-    setIsLoading(true);
+    if (!wishlist) return;
+
+    setIsSaving(true);
 
     try {
       const supabase = createClient();
 
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (userError || !user) {
+      if (!user || user.id !== wishlist.user_id) {
         toast({
           variant: 'destructive',
           title: 'Erreur',
-          description: 'Vous devez être connecté pour créer une wishlist.',
+          description: 'Vous n&apos;êtes pas autorisé à modifier cette wishlist.',
         });
         return;
       }
 
-      // Check if slug already exists for this user
-      const { data: existing } = await supabase
+      // Update wishlist
+      const { error } = await supabase
         .from('wishlists')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('slug', data.slug)
-        .single();
-
-      if (existing) {
-        toast({
-          variant: 'destructive',
-          title: 'Slug déjà utilisé',
-          description: 'Ce nom est déjà utilisé pour une de vos wishlists.',
-        });
-        return;
-      }
-
-      // Create wishlist
-      const { data: wishlist, error } = await supabase
-        .from('wishlists')
-        .insert({
-          user_id: user.id,
+        .update({
           title: data.title,
-          description: data.description,
-          slug: data.slug,
+          description: data.description || null,
           cover_image_url: data.coverImageUrl || null,
           is_public: data.visibility === 'public',
           visibility: data.visibility,
           is_collaborative: data.isCollaborative,
           category: data.category || null,
         })
-        .select()
-        .single();
+        .eq('id', wishlist.id)
+        .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error creating wishlist:', error);
+        console.error('Error updating wishlist:', error);
         toast({
           variant: 'destructive',
           title: 'Erreur',
@@ -126,11 +156,11 @@ export default function NewWishlistPage() {
       }
 
       toast({
-        title: 'Wishlist créée ! 🎉',
-        description: 'Votre wishlist a été créée avec succès.',
+        title: 'Wishlist mise à jour ! ✅',
+        description: 'Vos modifications ont été enregistrées.',
       });
 
-      router.push('/wishlists');
+      router.push(`/wishlists/${slug}`);
       router.refresh();
     } catch (error) {
       console.error('Error:', error);
@@ -140,20 +170,35 @@ export default function NewWishlistPage() {
         description: 'Une erreur est survenue. Veuillez réessayer.',
       });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!wishlist) {
+    return null;
   }
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <Link href="/wishlists" className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4">
+        <Link
+          href={`/wishlists/${slug}`}
+          className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4"
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Retour aux wishlists
+          Retour à la wishlist
         </Link>
-        <h1 className="text-3xl font-bold mb-2">Créer une wishlist</h1>
+        <h1 className="text-3xl font-bold mb-2">Paramètres de la wishlist</h1>
         <p className="text-muted-foreground">
-          Créez une nouvelle liste de souhaits pour une occasion spéciale
+          Modifiez les informations et la visibilité de votre wishlist
         </p>
       </div>
 
@@ -161,7 +206,7 @@ export default function NewWishlistPage() {
         <CardHeader>
           <CardTitle>Informations de la wishlist</CardTitle>
           <CardDescription>
-            Remplissez les informations pour créer votre wishlist
+            Mettez à jour les informations de votre wishlist
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -176,40 +221,12 @@ export default function NewWishlistPage() {
                     <FormControl>
                       <Input
                         placeholder="Ma wishlist de Noël 2024"
-                        disabled={isLoading}
+                        disabled={isSaving}
                         {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleTitleChange(e.target.value);
-                        }}
                       />
                     </FormControl>
                     <FormDescription>
                       Le nom de votre wishlist (max 100 caractères)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL personnalisée *</FormLabel>
-                    <FormControl>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">/wishlist/</span>
-                        <Input
-                          placeholder="ma-wishlist-noel-2024"
-                          disabled={isLoading}
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      URL unique pour partager votre wishlist
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -225,7 +242,7 @@ export default function NewWishlistPage() {
                     <FormControl>
                       <Textarea
                         placeholder="Quelques idées pour les fêtes..."
-                        disabled={isLoading}
+                        disabled={isSaving}
                         rows={4}
                         {...field}
                       />
@@ -247,7 +264,7 @@ export default function NewWishlistPage() {
                     <FormControl>
                       <Input
                         placeholder="Noël, Anniversaire, Mariage..."
-                        disabled={isLoading}
+                        disabled={isSaving}
                         {...field}
                         value={field.value || ''}
                       />
@@ -370,7 +387,7 @@ export default function NewWishlistPage() {
                         <TabsContent value="url" className="mt-4">
                           <Input
                             placeholder="https://example.com/image.jpg"
-                            disabled={isLoading}
+                            disabled={isSaving}
                             value={field.value}
                             onChange={field.onChange}
                           />
@@ -390,14 +407,14 @@ export default function NewWishlistPage() {
                   type="button"
                   variant="outline"
                   onClick={() => router.back()}
-                  disabled={isLoading}
+                  disabled={isSaving}
                   className="flex-1"
                 >
                   Annuler
                 </Button>
-                <Button type="submit" disabled={isLoading} className="flex-1">
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Créer la wishlist
+                <Button type="submit" disabled={isSaving} className="flex-1">
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enregistrer les modifications
                 </Button>
               </div>
             </form>

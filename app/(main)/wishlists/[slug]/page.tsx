@@ -21,9 +21,29 @@ import {
   Edit,
   Hash,
   Send,
+  Trash2,
+  Settings,
+  MoreVertical,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function WishlistDetailPage() {
   const params = useParams();
@@ -38,6 +58,8 @@ export default function WishlistDetailPage() {
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isCommentLoading, setIsCommentLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
 
   const isOwner = currentUser && wishlist && currentUser.id === wishlist.user_id;
@@ -223,6 +245,49 @@ export default function WishlistDetailPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!wishlist || !currentUser) return;
+
+    setIsDeleting(true);
+    const supabase = createClient();
+
+    try {
+      // Delete the wishlist (cascade will delete items, comments, etc.)
+      const { error } = await supabase
+        .from('wishlists')
+        .delete()
+        .eq('id', wishlist.id)
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error deleting wishlist:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erreur',
+          description: 'Impossible de supprimer la wishlist.',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Wishlist supprimée',
+        description: 'Votre wishlist a été supprimée avec succès.',
+      });
+
+      router.push('/feed');
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: 'Une erreur est survenue.',
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -316,11 +381,29 @@ export default function WishlistDetailPage() {
               </Button>
               {isOwner && (
                 <>
-                  <Button variant="outline" size="icon" asChild>
-                    <Link href={`/wishlists/${slug}/edit`}>
-                      <Edit className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/wishlists/${slug}/edit`} className="cursor-pointer">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Paramètres
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="text-red-600 focus:text-red-600 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button asChild>
                     <Link href={`/wishlists/${slug}/items/new`}>
                       <Plus className="h-4 w-4 mr-2" />
@@ -587,6 +670,28 @@ export default function WishlistDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette wishlist ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Tous les items, commentaires et données associés à cette wishlist seront définitivement supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
