@@ -227,7 +227,7 @@ export default function NewWishlistPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Décrivez le thème ou l'occasion de cette wishlist
+                      Décrivez le thème ou l&apos;occasion de cette wishlist
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -278,7 +278,7 @@ export default function NewWishlistPage() {
                             onChange={field.onChange}
                           />
                           <p className="text-xs text-muted-foreground mt-2">
-                            Collez l'URL d'une image en ligne
+                            Collez l&apos;URL d&apos;une image en ligne
                           </p>
                         </TabsContent>
                       </Tabs>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,13 +26,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<any>({ users: [], wishlists: [] });
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (searchQuery) {
-      performSearch();
-    }
-  }, [searchQuery, searchType, selectedCategories]);
-
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     setIsLoading(true);
     const supabase = createClient();
 
@@ -78,7 +72,13 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, searchType, selectedCategories]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      performSearch();
+    }
+  }, [searchQuery, performSearch]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -246,7 +246,7 @@ export default function SearchPage() {
               <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucun résultat</h3>
               <p className="text-muted-foreground">
-                Essayez avec d'autres mots-clés ou catégories
+                Essayez avec d&apos;autres mots-clés ou catégories
               </p>
             </div>
           )}
