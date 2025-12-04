@@ -88,10 +88,10 @@ export default function SignupPage() {
 
       toast({
         title: 'Inscription réussie !',
-        description: 'Vérifiez votre email pour confirmer votre compte.',
+        description: 'Un email de confirmation vous a été envoyé.',
       });
 
-      router.push('/login');
+      router.push('/verify-email?email=' + encodeURIComponent(data.email));
     } catch (error) {
       toast({
         variant: 'destructive',
