@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notification-center';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Header() {
   const router = useRouter();
@@ -116,7 +115,6 @@ export function Header() {
                   <PlusSquare className="h-6 w-6" />
                 </Link>
                 <NotificationCenter userId={user.id} />
-                <ThemeToggle />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
@@ -173,7 +171,6 @@ export function Header() {
                   <PlusSquare className="h-6 w-6" />
                 </Link>
                 <NotificationCenter userId={user.id} />
-                <ThemeToggle />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">

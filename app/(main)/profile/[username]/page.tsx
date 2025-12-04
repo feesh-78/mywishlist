@@ -33,7 +33,8 @@ export default function ProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [wishlists, setWishlists] = useState<any[]>([]);
-  const [stats, setStats] = useState({ wishlists: 0, followers: 0, following: 0 });
+  const [shoppingLists, setShoppingLists] = useState<any[]>([]);
+  const [stats, setStats] = useState({ wishlists: 0, shoppingLists: 0, followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -63,22 +64,42 @@ export default function ProfilePage() {
 
       setProfile(profileData);
 
-      // Load wishlists
+      // Load wishlists (type = wishlist)
       const { data: wishlistsData } = await supabase
         .from('wishlists')
         .select('*')
         .eq('user_id', profileData.id)
         .eq('is_public', true)
+        .eq('list_type', 'wishlist')
         .order('created_at', { ascending: false });
 
       setWishlists(wishlistsData || []);
+
+      // Load shopping lists (type = shopping_list)
+      const { data: shoppingListsData } = await supabase
+        .from('wishlists')
+        .select('*')
+        .eq('user_id', profileData.id)
+        .eq('is_public', true)
+        .eq('list_type', 'shopping_list')
+        .order('created_at', { ascending: false });
+
+      setShoppingLists(shoppingListsData || []);
 
       // Load stats
       const { count: wishlistCount } = await supabase
         .from('wishlists')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', profileData.id)
-        .eq('is_public', true);
+        .eq('is_public', true)
+        .eq('list_type', 'wishlist');
+
+      const { count: shoppingListCount } = await supabase
+        .from('wishlists')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profileData.id)
+        .eq('is_public', true)
+        .eq('list_type', 'shopping_list');
 
       const { count: followersCount } = await supabase
         .from('followers')
@@ -92,6 +113,7 @@ export default function ProfilePage() {
 
       setStats({
         wishlists: wishlistCount || 0,
+        shoppingLists: shoppingListCount || 0,
         followers: followersCount || 0,
         following: followingCount || 0,
       });
@@ -286,8 +308,12 @@ export default function ProfilePage() {
       <Tabs defaultValue="wishlists">
         <TabsList className="mb-6">
           <TabsTrigger value="wishlists">
+            <Heart className="h-4 w-4 mr-2" />
+            Wishlists
+          </TabsTrigger>
+          <TabsTrigger value="shopping">
             <List className="h-4 w-4 mr-2" />
-            Wishlists ({stats.wishlists})
+            Mes Achats
           </TabsTrigger>
         </TabsList>
 
@@ -342,6 +368,87 @@ export default function ProfilePage() {
                     )}
                     <p className="text-xs text-muted-foreground">
                       Créée le {new Date(wishlist.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-3">
+                        <Button variant="ghost" size="sm" className="h-8 px-2">
+                          <Heart className="h-4 w-4 mr-1" />
+                          <span className="text-xs">0</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2">
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          <span className="text-xs">0</span>
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Bookmark className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="shopping">
+          {shoppingLists.length === 0 ? (
+            <div className="text-center py-12">
+              <List className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aucun achat partagé</h3>
+              <p className="text-muted-foreground mb-4">
+                {isOwnProfile
+                  ? 'Partagez vos achats pour inspirer les autres !'
+                  : `@${username} n'a pas encore partagé d'achats.`}
+              </p>
+              {isOwnProfile && (
+                <Button asChild>
+                  <Link href="/shopping/new">Partager un achat</Link>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+              {shoppingLists.map((shopping) => (
+                <Card
+                  key={shopping.id}
+                  className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                >
+                  {/* Image */}
+                  {shopping.cover_image_url && (
+                    <div className="relative aspect-video overflow-hidden">
+                      <Image
+                        src={shopping.cover_image_url}
+                        alt={shopping.title}
+                        fill
+                        className="object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-1 line-clamp-2">{shopping.title}</h3>
+                    {shopping.category && (
+                      <Badge variant="secondary" className="mb-2">
+                        <Hash className="h-3 w-3 mr-1" />
+                        {shopping.category}
+                      </Badge>
+                    )}
+                    {shopping.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {shopping.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Acheté le {new Date(shopping.created_at).toLocaleDateString('fr-FR')}
                     </p>
 
                     {/* Actions */}

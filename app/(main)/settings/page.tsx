@@ -27,11 +27,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Loader2, ArrowLeft, User, Mail, Link as LinkIcon, FileText, Camera } from 'lucide-react';
+import { Loader2, ArrowLeft, User, Mail, Link as LinkIcon, FileText, Camera, Moon, Sun, Monitor, Settings as SettingsIcon, Bell, Lock, Shield, Globe, ChevronRight, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageUpload } from '@/components/shared/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTheme } from 'next-themes';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 
 const profileSchema = z.object({
   username: z
@@ -63,9 +68,19 @@ export default function SettingsPage() {
   const router = useRouter();
   const { data: currentUser, refetch } = useUser();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+
+  // Notification preferences
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [followNotifications, setFollowNotifications] = useState(true);
+  const [commentNotifications, setCommentNotifications] = useState(true);
+
+  // Privacy settings
+  const [profilePublic, setProfilePublic] = useState(true);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -230,20 +245,34 @@ export default function SettingsPage() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Retour au profil
         </Link>
-        <h1 className="text-3xl font-bold mb-2">Paramètres du profil</h1>
+        <h1 className="text-3xl font-bold mb-2">Paramètres</h1>
         <p className="text-muted-foreground">
-          Gérez vos informations personnelles et votre présence sur MyWishList
+          Gérez votre profil et vos préférences
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du profil</CardTitle>
-          <CardDescription>
-            Ces informations seront visibles publiquement sur votre profil
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="profile">
+            <User className="h-4 w-4 mr-2" />
+            Profil
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <SettingsIcon className="h-4 w-4 mr-2" />
+            Paramètres
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informations du profil</CardTitle>
+              <CardDescription>
+                Ces informations seront visibles publiquement sur votre profil
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Avatar Preview */}
@@ -418,8 +447,229 @@ export default function SettingsPage() {
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          {/* Notifications */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                <CardTitle>Notifications</CardTitle>
+              </div>
+              <CardDescription>
+                Gérez vos préférences de notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="email-notifs" className="text-base">Notifications par email</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Recevez des emails pour les activités importantes
+                  </p>
+                </div>
+                <Switch
+                  id="email-notifs"
+                  checked={emailNotifications}
+                  onCheckedChange={setEmailNotifications}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="push-notifs" className="text-base">Notifications push</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Recevez des notifications dans votre navigateur
+                  </p>
+                </div>
+                <Switch
+                  id="push-notifs"
+                  checked={pushNotifications}
+                  onCheckedChange={setPushNotifications}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="follow-notifs" className="text-base">Nouveaux abonnés</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Soyez notifié quand quelqu&apos;un vous suit
+                  </p>
+                </div>
+                <Switch
+                  id="follow-notifs"
+                  checked={followNotifications}
+                  onCheckedChange={setFollowNotifications}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="comment-notifs" className="text-base">Commentaires et likes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Soyez notifié des interactions sur vos wishlists
+                  </p>
+                </div>
+                <Switch
+                  id="comment-notifs"
+                  checked={commentNotifications}
+                  onCheckedChange={setCommentNotifications}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Privacy */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                <CardTitle>Confidentialité</CardTitle>
+              </div>
+              <CardDescription>
+                Contrôlez qui peut voir votre contenu
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="public-profile" className="text-base">Profil public</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Votre profil est visible par tout le monde
+                  </p>
+                </div>
+                <Switch
+                  id="public-profile"
+                  checked={profilePublic}
+                  onCheckedChange={setProfilePublic}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                <CardTitle>Sécurité</CardTitle>
+              </div>
+              <CardDescription>
+                Gérez la sécurité de votre compte
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button variant="outline" className="w-full justify-between" asChild>
+                <Link href="/reset-password">
+                  Changer mon mot de passe
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Language */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                <CardTitle>Langue</CardTitle>
+              </div>
+              <CardDescription>
+                Choisissez la langue de l&apos;interface
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup defaultValue="fr">
+                <div className="flex items-center space-x-3 mb-3">
+                  <RadioGroupItem value="fr" id="lang-fr" />
+                  <Label htmlFor="lang-fr" className="cursor-pointer font-normal">
+                    🇫🇷 Français
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 mb-3">
+                  <RadioGroupItem value="en" id="lang-en" disabled />
+                  <Label htmlFor="lang-en" className="cursor-pointer font-normal text-muted-foreground">
+                    🇬🇧 English (Bientôt disponible)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <RadioGroupItem value="es" id="lang-es" disabled />
+                  <Label htmlFor="lang-es" className="cursor-pointer font-normal text-muted-foreground">
+                    🇪🇸 Español (Bientôt disponible)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* Appearance */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Sun className="h-5 w-5" />
+                <CardTitle>Apparence</CardTitle>
+              </div>
+              <CardDescription>
+                Personnalisez l&apos;apparence de l&apos;interface
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Label className="text-base">Thème</Label>
+                <RadioGroup value={theme} onValueChange={setTheme}>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <RadioGroupItem value="light" id="light" />
+                    <Label htmlFor="light" className="flex items-center cursor-pointer font-normal">
+                      <Sun className="h-4 w-4 mr-2" />
+                      Clair
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 mb-3">
+                    <RadioGroupItem value="dark" id="dark" />
+                    <Label htmlFor="dark" className="flex items-center cursor-pointer font-normal">
+                      <Moon className="h-4 w-4 mr-2" />
+                      Sombre
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="system" id="system" />
+                    <Label htmlFor="system" className="flex items-center cursor-pointer font-normal">
+                      <Monitor className="h-4 w-4 mr-2" />
+                      Système
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Management */}
+          <Card className="border-orange-200 dark:border-orange-900">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-orange-600" />
+                <CardTitle>Gestion du compte</CardTitle>
+              </div>
+              <CardDescription>
+                Désactiver ou supprimer votre compte
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full justify-between" asChild>
+                <Link href="/account">
+                  Gérer mon compte
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

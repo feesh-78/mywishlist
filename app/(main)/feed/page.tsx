@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Heart, MessageCircle, Share2, Bookmark, Hash, TrendingUp, Users } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Hash, TrendingUp, Users, ShoppingBag, Gift, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { WishlistSkeletonGrid } from '@/components/skeletons/wishlist-skeleton';
@@ -19,64 +19,76 @@ type FeedType = 'all' | 'following' | 'popular';
 export default function FeedPage() {
   const { data: currentUser } = useUser();
   const { toast } = useToast();
-  const [wishlists, setWishlists] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [feedType, setFeedType] = useState<FeedType>('all');
-  const [likedWishlists, setLikedWishlists] = useState<Set<string>>(new Set());
-  const [bookmarkedWishlists, setBookmarkedWishlists] = useState<Set<string>>(new Set());
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
+  const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(new Set());
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    loadWishlists();
+    loadItems();
+    loadCategories();
     if (currentUser) {
-      loadLikedWishlists();
-      loadBookmarkedWishlists();
+      loadLikedItems();
+      loadBookmarkedItems();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedType, currentUser]);
+  }, [feedType, currentUser, selectedCategory]);
 
-  async function loadLikedWishlists() {
+  async function loadLikedItems() {
     if (!currentUser) return;
 
     const supabase = createClient();
     const { data } = await supabase
       .from('likes')
-      .select('wishlist_id')
-      .eq('user_id', currentUser.id);
+      .select('entity_id')
+      .eq('user_id', currentUser.id)
+      .eq('entity_type', 'item');
 
     if (data) {
-      setLikedWishlists(new Set(data.map((like) => like.wishlist_id)));
+      setLikedItems(new Set(data.map((like) => like.entity_id)));
     }
   }
 
-  async function loadBookmarkedWishlists() {
+  async function loadBookmarkedItems() {
     if (!currentUser) return;
 
     const supabase = createClient();
     const { data } = await supabase
       .from('bookmarks')
-      .select('wishlist_id')
+      .select('item_id')
       .eq('user_id', currentUser.id)
-      .not('wishlist_id', 'is', null);
+      .not('item_id', 'is', null);
 
     if (data) {
-      setBookmarkedWishlists(new Set(data.map((bookmark) => bookmark.wishlist_id)));
+      setBookmarkedItems(new Set(data.map((bookmark) => bookmark.item_id)));
     }
   }
 
-  async function loadWishlists() {
+  async function loadCategories() {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('wishlists')
+      .select('category')
+      .eq('is_public', true)
+      .not('category', 'is', null);
+
+    if (data) {
+      // Get unique categories
+      const uniqueCategories = Array.from(new Set(data.map((w) => w.category).filter(Boolean)));
+      setCategories(uniqueCategories as string[]);
+    }
+  }
+
+  async function loadItems() {
     setIsLoading(true);
     const supabase = createClient();
 
     try {
-      let query = supabase
-        .from('wishlists')
-        .select(`
-          *,
-          profile:profiles(id, username, full_name, avatar_url),
-          likes:likes(count),
-          comments:comments(count)
-        `)
-        .eq('is_public', true);
+      // First, get list of wishlists to filter items from
+      let wishlistIds: string[] = [];
 
       if (feedType === 'following' && currentUser) {
         // Get followed users
@@ -86,36 +98,79 @@ export default function FeedPage() {
           .eq('follower_id', currentUser.id);
 
         if (!followedUsers || followedUsers.length === 0) {
-          setWishlists([]);
+          setItems([]);
           setIsLoading(false);
           return;
         }
 
         const followedIds = followedUsers.map((f) => f.following_id);
-        query = query.in('user_id', followedIds);
+
+        // Get wishlists from followed users
+        const { data: wishlists } = await supabase
+          .from('wishlists')
+          .select('id')
+          .in('user_id', followedIds)
+          .eq('is_public', true);
+
+        wishlistIds = wishlists?.map((w) => w.id) || [];
+
+        if (wishlistIds.length === 0) {
+          setItems([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Build query for items
+      let query = supabase
+        .from('wishlist_items')
+        .select(`
+          *,
+          wishlist:wishlists!inner(
+            id,
+            title,
+            slug,
+            category,
+            user_id,
+            is_public,
+            list_type,
+            profile:profiles(id, username, full_name, avatar_url)
+          )
+        `);
+
+      // Filter by public wishlists
+      query = query.eq('wishlist.is_public', true);
+
+      // Filter by followed users if needed
+      if (feedType === 'following' && wishlistIds.length > 0) {
+        query = query.in('wishlist_id', wishlistIds);
+      }
+
+      // Filter by category if selected
+      if (selectedCategory) {
+        query = query.eq('wishlist.category', selectedCategory);
       }
 
       const { data, error } = await query
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) {
-        console.error('Error loading wishlists:', error);
+        console.error('Error loading items:', error);
         return;
       }
 
-      let wishlistsData = data || [];
+      let itemsData = data || [];
 
-      // Sort by popularity if needed
+      // Sort by popularity if needed (based on price as a simple metric for now)
       if (feedType === 'popular') {
-        wishlistsData = wishlistsData.sort((a, b) => {
-          const aLikes = a.likes?.[0]?.count || 0;
-          const bLikes = b.likes?.[0]?.count || 0;
-          return bLikes - aLikes;
+        itemsData = itemsData.sort((a, b) => {
+          // You can implement a more sophisticated popularity metric later
+          return (b.price || 0) - (a.price || 0);
         });
       }
 
-      setWishlists(wishlistsData);
+      setItems(itemsData);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -123,12 +178,12 @@ export default function FeedPage() {
     }
   }
 
-  async function handleLike(wishlistId: string, isLiked: boolean) {
+  async function handleLike(itemId: string, isLiked: boolean) {
     if (!currentUser) {
       toast({
         variant: 'destructive',
         title: 'Connexion requise',
-        description: 'Vous devez être connecté pour liker une wishlist.',
+        description: 'Vous devez être connecté pour liker un produit.',
       });
       return;
     }
@@ -142,63 +197,41 @@ export default function FeedPage() {
           .from('likes')
           .delete()
           .eq('user_id', currentUser.id)
-          .eq('wishlist_id', wishlistId);
+          .eq('entity_id', itemId)
+          .eq('entity_type', 'item');
 
-        setLikedWishlists((prev) => {
+        setLikedItems((prev) => {
           const newSet = new Set(prev);
-          newSet.delete(wishlistId);
+          newSet.delete(itemId);
           return newSet;
         });
-
-        // Update local count
-        setWishlists((prev) =>
-          prev.map((w) =>
-            w.id === wishlistId
-              ? {
-                  ...w,
-                  likes: [{ count: Math.max(0, (w.likes?.[0]?.count || 1) - 1) }],
-                }
-              : w
-          )
-        );
       } else {
         // Like
         await supabase.from('likes').insert({
           user_id: currentUser.id,
-          wishlist_id: wishlistId,
+          entity_id: itemId,
+          entity_type: 'item',
         });
 
-        setLikedWishlists((prev) => new Set(prev).add(wishlistId));
-
-        // Update local count
-        setWishlists((prev) =>
-          prev.map((w) =>
-            w.id === wishlistId
-              ? {
-                  ...w,
-                  likes: [{ count: (w.likes?.[0]?.count || 0) + 1 }],
-                }
-              : w
-          )
-        );
+        setLikedItems((prev) => new Set(prev).add(itemId));
       }
     } catch (error) {
-      console.error('Error liking wishlist:', error);
+      console.error('Error liking item:', error);
       toast({
         variant: 'destructive',
         title: 'Erreur',
-        description: 'Impossible de liker cette wishlist.',
+        description: 'Impossible de liker ce produit.',
       });
     }
   }
 
-  async function handleShare(wishlist: any) {
-    const url = `${window.location.origin}/wishlists/${wishlist.slug}`;
+  async function handleShare(item: any) {
+    const url = item.url || `${window.location.origin}/wishlists/${item.wishlist.slug}`;
     try {
       await navigator.clipboard.writeText(url);
       toast({
         title: 'Lien copié',
-        description: 'Le lien de la wishlist a été copié dans le presse-papier.',
+        description: 'Le lien du produit a été copié dans le presse-papier.',
       });
     } catch (error) {
       toast({
@@ -209,12 +242,12 @@ export default function FeedPage() {
     }
   }
 
-  async function handleBookmark(wishlistId: string, isBookmarked: boolean) {
+  async function handleBookmark(itemId: string, isBookmarked: boolean) {
     if (!currentUser) {
       toast({
         variant: 'destructive',
         title: 'Connexion requise',
-        description: 'Vous devez être connecté pour ajouter une wishlist en favoris.',
+        description: 'Vous devez être connecté pour ajouter un produit en favoris.',
       });
       return;
     }
@@ -228,35 +261,35 @@ export default function FeedPage() {
           .from('bookmarks')
           .delete()
           .eq('user_id', currentUser.id)
-          .eq('wishlist_id', wishlistId);
+          .eq('item_id', itemId);
 
-        setBookmarkedWishlists((prev) => {
+        setBookmarkedItems((prev) => {
           const newSet = new Set(prev);
-          newSet.delete(wishlistId);
+          newSet.delete(itemId);
           return newSet;
         });
 
         toast({
           title: 'Retiré des favoris',
-          description: 'La wishlist a été retirée de vos favoris.',
+          description: 'Le produit a été retiré de vos favoris.',
         });
       } else {
         // Add bookmark
         await supabase.from('bookmarks').insert({
           user_id: currentUser.id,
-          wishlist_id: wishlistId,
-          item_id: null,
+          wishlist_id: null,
+          item_id: itemId,
         });
 
-        setBookmarkedWishlists((prev) => new Set(prev).add(wishlistId));
+        setBookmarkedItems((prev) => new Set(prev).add(itemId));
 
         toast({
           title: 'Ajouté aux favoris',
-          description: 'La wishlist a été ajoutée à vos favoris.',
+          description: 'Le produit a été ajouté à vos favoris.',
         });
       }
     } catch (error) {
-      console.error('Error bookmarking wishlist:', error);
+      console.error('Error bookmarking item:', error);
       toast({
         variant: 'destructive',
         title: 'Erreur',
@@ -285,9 +318,35 @@ export default function FeedPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">Découvrir</h1>
         <p className="text-muted-foreground text-sm">
-          Les wishlists de la communauté
+          Les produits et achats de la communauté
         </p>
       </div>
+
+      {/* Categories Filter */}
+      {categories.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <Badge
+              variant={selectedCategory === null ? 'default' : 'outline'}
+              className="cursor-pointer whitespace-nowrap"
+              onClick={() => setSelectedCategory(null)}
+            >
+              Toutes les catégories
+            </Badge>
+            {categories.map((category) => (
+              <Badge
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                className="cursor-pointer whitespace-nowrap"
+                onClick={() => setSelectedCategory(category)}
+              >
+                <Hash className="h-3 w-3 mr-1" />
+                {category}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={feedType} onValueChange={(v) => setFeedType(v as FeedType)} className="mb-6">
@@ -305,137 +364,170 @@ export default function FeedPage() {
 
         <TabsContent value={feedType} className="mt-6">
           {/* Empty state */}
-          {wishlists.length === 0 ? (
+          {items.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">
-                {feedType === 'following' ? '👥' : '🎁'}
+                {feedType === 'following' ? '👥' : '🛍️'}
               </div>
               <h3 className="text-lg font-semibold mb-2">
                 {feedType === 'following'
-                  ? 'Aucune wishlist de vos abonnements'
-                  : 'Aucune wishlist pour le moment'}
+                  ? 'Aucun produit de vos abonnements'
+                  : 'Aucun produit pour le moment'}
               </h3>
               <p className="text-muted-foreground mb-4">
                 {feedType === 'following'
-                  ? 'Suivez des utilisateurs pour voir leurs wishlists ici !'
-                  : 'Soyez le premier à créer une wishlist !'}
+                  ? 'Suivez des utilisateurs pour voir leurs produits ici !'
+                  : 'Soyez le premier à partager un produit !'}
               </p>
               <Button asChild>
                 <Link href={feedType === 'following' ? '/search?type=users' : '/wishlists/new'}>
-                  {feedType === 'following' ? 'Trouver des utilisateurs' : 'Créer une wishlist'}
+                  {feedType === 'following' ? 'Trouver des utilisateurs' : 'Partager un produit'}
                 </Link>
               </Button>
             </div>
           ) : (
-            /* Grille Masonry */
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-              {wishlists.map((wishlist) => {
-                const isLiked = likedWishlists.has(wishlist.id);
-                const isBookmarked = bookmarkedWishlists.has(wishlist.id);
-                const likesCount = wishlist.likes?.[0]?.count || 0;
-                const commentsCount = wishlist.comments?.[0]?.count || 0;
+            /* Grille Masonry Pinterest-style */
+            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+              {items.map((item) => {
+                const isLiked = likedItems.has(item.id);
+                const isBookmarked = bookmarkedItems.has(item.id);
+                const listType = item.wishlist?.list_type || 'wishlist';
+                const isShoppingItem = listType === 'shopping_list';
 
                 return (
                   <Card
-                    key={wishlist.id}
-                    className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow"
+                    key={item.id}
+                    className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow group"
                   >
                     {/* Image */}
-                    <Link href={`/wishlists/${wishlist.slug}`}>
-                      {wishlist.cover_image_url && (
-                        <div className="relative aspect-auto overflow-hidden">
-                          <Image
-                            src={wishlist.cover_image_url}
-                            alt={wishlist.title}
-                            width={400}
-                            height={400}
-                            className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
-                          />
+                    {item.image_url && (
+                      <div className="relative aspect-auto overflow-hidden">
+                        <Image
+                          src={item.image_url}
+                          alt={item.title}
+                          width={400}
+                          height={400}
+                          className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {/* Type badge overlay */}
+                        <div className="absolute top-2 right-2">
+                          <Badge
+                            variant={isShoppingItem ? 'default' : 'secondary'}
+                            className={isShoppingItem ? 'bg-green-600 hover:bg-green-700' : ''}
+                          >
+                            {isShoppingItem ? (
+                              <>
+                                <ShoppingBag className="h-3 w-3 mr-1" />
+                                Acheté
+                              </>
+                            ) : (
+                              <>
+                                <Gift className="h-3 w-3 mr-1" />
+                                Envie
+                              </>
+                            )}
+                          </Badge>
                         </div>
-                      )}
-                    </Link>
+                        {/* Price overlay */}
+                        {item.price && (
+                          <div className="absolute bottom-2 left-2">
+                            <Badge className="bg-black/70 hover:bg-black/80 text-white">
+                              {item.price} {item.currency}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Content */}
                     <CardContent className="p-4">
                       {/* User info */}
                       <Link
-                        href={`/profile/${wishlist.profile?.username}`}
+                        href={`/profile/${item.wishlist?.profile?.username}`}
                         className="flex items-center gap-2 mb-3 hover:opacity-80"
                       >
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={wishlist.profile?.avatar_url} />
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={item.wishlist?.profile?.avatar_url} />
                           <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
-                            {wishlist.profile?.username?.charAt(0).toUpperCase()}
+                            {item.wishlist?.profile?.username?.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {wishlist.profile?.full_name || wishlist.profile?.username}
+                          <p className="text-xs font-medium truncate">
+                            {item.wishlist?.profile?.full_name || item.wishlist?.profile?.username}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            @{wishlist.profile?.username}
+                            @{item.wishlist?.profile?.username}
                           </p>
                         </div>
                       </Link>
 
-                      {/* Wishlist info */}
-                      <Link href={`/wishlists/${wishlist.slug}`}>
-                        <h3 className="font-semibold mb-1 line-clamp-2 hover:text-primary">
-                          {wishlist.title}
-                        </h3>
-                      </Link>
-                      {wishlist.category && (
-                        <Badge variant="secondary" className="mb-2">
-                          <Hash className="h-3 w-3 mr-1" />
-                          {wishlist.category}
-                        </Badge>
+                      {/* Item info */}
+                      <h3 className="font-semibold mb-1 line-clamp-2 text-sm">
+                        {item.title}
+                      </h3>
+
+                      {/* Collection/Category */}
+                      {item.wishlist?.category && (
+                        <Link href={`/wishlists/${item.wishlist.slug}`}>
+                          <Badge variant="outline" className="mb-2 text-xs">
+                            <Hash className="h-3 w-3 mr-1" />
+                            {item.wishlist.category}
+                          </Badge>
+                        </Link>
                       )}
-                      {wishlist.description && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {wishlist.description}
+
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                          {item.description}
                         </p>
                       )}
 
                       {/* Actions */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 px-2"
-                            onClick={() => handleLike(wishlist.id, isLiked)}
+                            className="h-7 px-2"
+                            onClick={() => handleLike(item.id, isLiked)}
                           >
                             <Heart
-                              className={`h-4 w-4 mr-1 ${
+                              className={`h-3 w-3 mr-1 ${
                                 isLiked ? 'fill-red-500 text-red-500' : ''
                               }`}
                             />
-                            <span className="text-xs">{likesCount}</span>
                           </Button>
-                          <Link href={`/wishlists/${wishlist.slug}#comments`}>
-                            <Button variant="ghost" size="sm" className="h-8 px-2">
-                              <MessageCircle className="h-4 w-4 mr-1" />
-                              <span className="text-xs">{commentsCount}</span>
+                          {item.url && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2"
+                              asChild
+                            >
+                              <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
                             </Button>
-                          </Link>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleShare(wishlist)}
+                            className="h-7 w-7"
+                            onClick={() => handleShare(item)}
                           >
-                            <Share2 className="h-4 w-4" />
+                            <Share2 className="h-3 w-3" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleBookmark(wishlist.id, isBookmarked)}
+                            className="h-7 w-7"
+                            onClick={() => handleBookmark(item.id, isBookmarked)}
                           >
                             <Bookmark
-                              className={`h-4 w-4 ${
+                              className={`h-3 w-3 ${
                                 isBookmarked ? 'fill-yellow-500 text-yellow-500' : ''
                               }`}
                             />
