@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export const wishlistVisibilitySchema = z.enum(['public', 'private', 'followers', 'friends', 'custom']);
-
 export const createWishlistSchema = z.object({
   title: z
     .string()
@@ -15,7 +13,6 @@ export const createWishlistSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Le slug ne peut contenir que des lettres minuscules, chiffres et tirets'),
   coverImageUrl: z.string().url('URL invalide').optional().or(z.literal('')),
   isPublic: z.boolean().default(true),
-  visibility: wishlistVisibilitySchema.default('public'),
   isCollaborative: z.boolean().default(false),
   eventDate: z.string().datetime().optional().nullable(),
   category: z.string().max(50).optional().nullable(),

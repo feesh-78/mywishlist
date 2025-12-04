@@ -25,13 +25,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Loader2, ArrowLeft, Globe, Lock, Users, UserCheck, UserPlus } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/shared/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 export default function NewWishlistPage() {
   const router = useRouter();
@@ -46,7 +45,6 @@ export default function NewWishlistPage() {
       slug: '',
       coverImageUrl: '',
       isPublic: true,
-      visibility: 'public' as 'public' | 'private' | 'followers' | 'friends' | 'custom',
       isCollaborative: false,
       category: '',
     },
@@ -107,8 +105,7 @@ export default function NewWishlistPage() {
           description: data.description,
           slug: data.slug,
           cover_image_url: data.coverImageUrl || null,
-          is_public: data.visibility === 'public',
-          visibility: data.visibility,
+          is_public: data.isPublic,
           is_collaborative: data.isCollaborative,
           category: data.category || null,
         })
@@ -259,92 +256,22 @@ export default function NewWishlistPage() {
 
               <FormField
                 control={form.control}
-                name="visibility"
+                name="isPublic"
                 render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Visibilité de la wishlist</FormLabel>
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Wishlist publique</FormLabel>
+                      <FormDescription>
+                        Rendre cette wishlist visible par tout le monde
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-2"
-                      >
-                        <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <RadioGroupItem value="public" id="public" />
-                          <div className="flex-1">
-                            <Label htmlFor="public" className="flex items-center gap-2 font-normal cursor-pointer">
-                              <Globe className="h-4 w-4 text-blue-600" />
-                              <div>
-                                <div className="font-semibold">Publique</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Visible par tout le monde
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                        <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <RadioGroupItem value="followers" id="followers" />
-                          <div className="flex-1">
-                            <Label htmlFor="followers" className="flex items-center gap-2 font-normal cursor-pointer">
-                              <Users className="h-4 w-4 text-purple-600" />
-                              <div>
-                                <div className="font-semibold">Abonnés uniquement</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Visible uniquement par vos abonnés
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                        <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <RadioGroupItem value="friends" id="friends" />
-                          <div className="flex-1">
-                            <Label htmlFor="friends" className="flex items-center gap-2 font-normal cursor-pointer">
-                              <UserCheck className="h-4 w-4 text-green-600" />
-                              <div>
-                                <div className="font-semibold">Amis uniquement</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Visible uniquement par vos amis
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                        <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <RadioGroupItem value="custom" id="custom" />
-                          <div className="flex-1">
-                            <Label htmlFor="custom" className="flex items-center gap-2 font-normal cursor-pointer">
-                              <UserPlus className="h-4 w-4 text-orange-600" />
-                              <div>
-                                <div className="font-semibold">Personnes spécifiques</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Choisissez qui peut voir cette wishlist
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                        <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <RadioGroupItem value="private" id="private" />
-                          <div className="flex-1">
-                            <Label htmlFor="private" className="flex items-center gap-2 font-normal cursor-pointer">
-                              <Lock className="h-4 w-4 text-red-600" />
-                              <div>
-                                <div className="font-semibold">Privée</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Visible uniquement par vous
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Choisissez qui peut voir cette wishlist
-                    </FormDescription>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
