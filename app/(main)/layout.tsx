@@ -1,5 +1,6 @@
 import { Header } from '@/components/shared/header';
 import { MobileLayout } from '@/components/mobile-layout-wrapper';
+import { AuthProvider } from '@/components/auth/auth-provider';
 
 export default function MainLayout({
   children,
@@ -7,9 +8,10 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 container py-6 pb-20 md:pb-6">{children}</main>
+    <AuthProvider>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 container py-6 pb-20 md:pb-6">{children}</main>
       <footer className="border-t py-6 md:py-0 mb-16 md:mb-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
           <p className="text-sm text-muted-foreground">
@@ -29,6 +31,7 @@ export default function MainLayout({
         </div>
       </footer>
       <MobileLayout />
-    </div>
+      </div>
+    </AuthProvider>
   );
 }

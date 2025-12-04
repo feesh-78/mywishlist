@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/use-user';
+import { useAuthDialog } from '@/lib/hooks/use-auth-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ export default function WishlistDetailPage() {
   const slug = params.slug as string;
   const { data: currentUser } = useUser();
   const { toast } = useToast();
+  const { openDialog } = useAuthDialog();
 
   const [wishlist, setWishlist] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -135,11 +137,7 @@ export default function WishlistDetailPage() {
 
   async function handleAddComment() {
     if (!currentUser) {
-      toast({
-        variant: 'destructive',
-        title: 'Connexion requise',
-        description: 'Vous devez être connecté pour commenter.',
-      });
+      openDialog('comment');
       return;
     }
 
@@ -189,11 +187,7 @@ export default function WishlistDetailPage() {
 
   async function handleReserve(itemId: string, isReserved: boolean) {
     if (!currentUser) {
-      toast({
-        variant: 'destructive',
-        title: 'Connexion requise',
-        description: 'Vous devez être connecté pour réserver un item.',
-      });
+      openDialog('like');
       return;
     }
 
@@ -304,11 +298,7 @@ export default function WishlistDetailPage() {
 
   async function handleBookmark() {
     if (!currentUser) {
-      toast({
-        variant: 'destructive',
-        title: 'Connexion requise',
-        description: 'Vous devez être connecté pour ajouter en favoris.',
-      });
+      openDialog('like');
       return;
     }
 

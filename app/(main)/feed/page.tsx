@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/use-user';
+import { useAuthDialog } from '@/lib/hooks/use-auth-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ type FeedType = 'all' | 'following' | 'popular';
 export default function FeedPage() {
   const { data: currentUser } = useUser();
   const { toast } = useToast();
+  const { openDialog } = useAuthDialog();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [feedType, setFeedType] = useState<FeedType>('all');
@@ -180,11 +182,7 @@ export default function FeedPage() {
 
   async function handleLike(itemId: string, isLiked: boolean) {
     if (!currentUser) {
-      toast({
-        variant: 'destructive',
-        title: 'Connexion requise',
-        description: 'Vous devez être connecté pour liker un produit.',
-      });
+      openDialog('like');
       return;
     }
 
@@ -244,11 +242,7 @@ export default function FeedPage() {
 
   async function handleBookmark(itemId: string, isBookmarked: boolean) {
     if (!currentUser) {
-      toast({
-        variant: 'destructive',
-        title: 'Connexion requise',
-        description: 'Vous devez être connecté pour ajouter un produit en favoris.',
-      });
+      openDialog('like');
       return;
     }
 
