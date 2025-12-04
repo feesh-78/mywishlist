@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, MessageCircle, Search, Filter, X, User, List, Hash } from 'lucide-react';
+import { Heart, MessageCircle, Search, Filter, X, User, List, Hash, ShoppingBag, Gift } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -21,7 +21,7 @@ const categories = [
 function SearchContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [searchType, setSearchType] = useState<'all' | 'users' | 'wishlists'>('all');
+  const [searchType, setSearchType] = useState<'all' | 'users' | 'lists'>('all');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [results, setResults] = useState<any>({ users: [], wishlists: [] });
   const [isLoading, setIsLoading] = useState(false);
@@ -44,8 +44,8 @@ function SearchContent() {
         usersData = users || [];
       }
 
-      // Search wishlists
-      if (searchType === 'all' || searchType === 'wishlists') {
+      // Search lists (wishlists + shopping lists)
+      if (searchType === 'all' || searchType === 'lists') {
         let query = supabase
           .from('wishlists')
           .select(`
@@ -53,6 +53,7 @@ function SearchContent() {
             profile:profiles(username, full_name, avatar_url)
           `)
           .eq('is_public', true);
+        // No filter on list_type - we want both wishlists and shopping lists
 
         if (searchQuery) {
           query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
@@ -102,7 +103,7 @@ function SearchContent() {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Rechercher des utilisateurs, wishlists, catégories..."
+              placeholder="Rechercher des utilisateurs, collections, catégories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 text-base"
@@ -162,9 +163,9 @@ function SearchContent() {
             <User className="h-4 w-4 mr-2" />
             Utilisateurs ({results.users.length})
           </TabsTrigger>
-          <TabsTrigger value="wishlists">
+          <TabsTrigger value="lists">
             <List className="h-4 w-4 mr-2" />
-            Wishlists ({results.wishlists.length})
+            Collections ({results.wishlists.length})
           </TabsTrigger>
         </TabsList>
 
@@ -198,7 +199,7 @@ function SearchContent() {
 
           {results.wishlists.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4">Wishlists</h2>
+              <h2 className="text-lg font-semibold mb-4">Collections</h2>
               <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
                 {results.wishlists.map((wishlist: any) => (
                   <Card key={wishlist.id} className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow">
@@ -224,9 +225,21 @@ function SearchContent() {
                           @{wishlist.profile?.username}
                         </span>
                       </div>
-                      <h3 className="font-semibold mb-1">{wishlist.title}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold flex-1">{wishlist.title}</h3>
+                        <Badge
+                          variant={wishlist.list_type === 'shopping_list' ? 'default' : 'secondary'}
+                          className={wishlist.list_type === 'shopping_list' ? 'bg-green-600 hover:bg-green-700' : ''}
+                        >
+                          {wishlist.list_type === 'shopping_list' ? (
+                            <><ShoppingBag className="h-3 w-3 mr-1" />Achats</>
+                          ) : (
+                            <><Gift className="h-3 w-3 mr-1" />Envies</>
+                          )}
+                        </Badge>
+                      </div>
                       {wishlist.category && (
-                        <Badge variant="secondary" className="mb-2">
+                        <Badge variant="outline" className="mb-2">
                           <Hash className="h-3 w-3 mr-1" />
                           {wishlist.category}
                         </Badge>
@@ -282,8 +295,8 @@ function SearchContent() {
           </div>
         </TabsContent>
 
-        {/* Wishlists Only */}
-        <TabsContent value="wishlists" className="mt-6">
+        {/* Lists Only */}
+        <TabsContent value="lists" className="mt-6">
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
             {results.wishlists.map((wishlist: any) => (
               <Card key={wishlist.id} className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow">
@@ -309,9 +322,21 @@ function SearchContent() {
                       @{wishlist.profile?.username}
                     </span>
                   </div>
-                  <h3 className="font-semibold mb-1">{wishlist.title}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold flex-1">{wishlist.title}</h3>
+                    <Badge
+                      variant={wishlist.list_type === 'shopping_list' ? 'default' : 'secondary'}
+                      className={wishlist.list_type === 'shopping_list' ? 'bg-green-600 hover:bg-green-700' : ''}
+                    >
+                      {wishlist.list_type === 'shopping_list' ? (
+                        <><ShoppingBag className="h-3 w-3 mr-1" />Achats</>
+                      ) : (
+                        <><Gift className="h-3 w-3 mr-1" />Envies</>
+                      )}
+                    </Badge>
+                  </div>
                   {wishlist.category && (
-                    <Badge variant="secondary" className="mb-2">
+                    <Badge variant="outline" className="mb-2">
                       <Hash className="h-3 w-3 mr-1" />
                       {wishlist.category}
                     </Badge>

@@ -24,6 +24,7 @@ import {
   User,
   Search,
   Menu,
+  ShoppingBag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notification-center';
@@ -75,7 +76,7 @@ export function Header() {
               <input
                 type="text"
                 name="q"
-                placeholder="Rechercher utilisateurs, wishlists, catégories..."
+                placeholder="Rechercher utilisateurs, collections, catégories..."
                 className="w-full rounded-lg border bg-background px-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </form>
@@ -148,6 +149,12 @@ export function Header() {
                       <Link href="/wishlists" className="cursor-pointer">
                         <Heart className="mr-2 h-4 w-4" />
                         Mes wishlists
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/profile/${user.user_metadata?.username}?tab=shopping`} className="cursor-pointer">
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Mes achats
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

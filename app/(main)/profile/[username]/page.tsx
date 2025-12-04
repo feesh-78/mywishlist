@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/use-user';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,6 +27,7 @@ import Link from 'next/link';
 
 export default function ProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const username = params.username as string;
   const { data: currentUser } = useUser();
   const { toast } = useToast();
@@ -40,6 +41,7 @@ export default function ProfilePage() {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const isOwnProfile = currentUser?.user_metadata?.username === username;
+  const defaultTab = searchParams.get('tab') || 'wishlists';
 
   useEffect(() => {
     loadProfile();
@@ -305,7 +307,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="wishlists">
+      <Tabs defaultValue={defaultTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="wishlists">
             <Heart className="h-4 w-4 mr-2" />
