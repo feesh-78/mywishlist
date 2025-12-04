@@ -12,6 +12,7 @@ import { useToast } from '@/lib/hooks/use-toast';
 import { Heart, MessageCircle, Share2, Bookmark, Hash, TrendingUp, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { WishlistSkeletonGrid } from '@/components/skeletons/wishlist-skeleton';
 
 type FeedType = 'all' | 'following' | 'popular';
 
@@ -266,8 +267,14 @@ export default function FeedPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-1">Découvrir</h1>
+          <p className="text-muted-foreground text-sm">
+            Les wishlists de la communauté
+          </p>
+        </div>
+        <WishlistSkeletonGrid count={6} />
       </div>
     );
   }
