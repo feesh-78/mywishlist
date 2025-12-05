@@ -39,7 +39,9 @@ export async function updateSession(request: NextRequest) {
 
   // Protect routes - allow auth pages and home page for non-authenticated users
   const publicRoutes = ['/', '/login', '/signup', '/reset-password'];
-  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
+  const publicApiRoutes = ['/api/extract-url'];
+  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname) ||
+                        publicApiRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
