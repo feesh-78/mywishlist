@@ -131,8 +131,7 @@ export default function NewWishlistPage() {
         description: 'Votre wishlist a été créée avec succès.',
       });
 
-      router.push('/wishlists');
-      router.refresh();
+      router.push(`/wishlists/${finalSlug}`);
     } catch (error) {
       console.error('Error:', error);
       toast({

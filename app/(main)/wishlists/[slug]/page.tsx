@@ -76,6 +76,16 @@ export default function WishlistDetailPage() {
   );
   const canEdit = isOwner || isEditor;
 
+  // Debug logs
+  console.log('🔍 DEBUG - Wishlist permissions:', {
+    currentUserId: currentUser?.id,
+    wishlistUserId: wishlist?.user_id,
+    isOwner,
+    isEditor,
+    canEdit,
+    collaboratorsCount: collaborators.length,
+  });
+
   useEffect(() => {
     loadWishlist();
     // eslint-disable-next-line react-hooks/exhaustive-deps

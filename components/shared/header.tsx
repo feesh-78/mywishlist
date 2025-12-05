@@ -115,7 +115,7 @@ export function Header() {
                 >
                   <PlusSquare className="h-6 w-6" />
                 </Link>
-                <NotificationCenter userId={user.id} />
+                {/* <NotificationCenter userId={user.id} /> */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">

@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/shared/image-upload';
@@ -192,7 +192,15 @@ export default function EditWishlistPage() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Retour à la wishlist
         </Link>
-        <h1 className="text-3xl font-bold mb-2">Paramètres de la wishlist</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold">Paramètres de la wishlist</h1>
+          <Button asChild>
+            <Link href={`/wishlists/${slug}/items/new`}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un item
+            </Link>
+          </Button>
+        </div>
         <p className="text-muted-foreground">
           Modifiez les informations et la visibilité de votre wishlist
         </p>
