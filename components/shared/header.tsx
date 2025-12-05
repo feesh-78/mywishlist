@@ -110,8 +110,9 @@ export function Header() {
                   <Search className={cn("h-6 w-6", isActive('/search') && "fill-current")} />
                 </Link>
                 <Link
-                  href="/lists/new"
+                  href="/items/new"
                   className="transition-colors hover:text-primary"
+                  title="Ajouter un item"
                 >
                   <PlusSquare className="h-6 w-6" />
                 </Link>
@@ -174,10 +175,10 @@ export function Header() {
 
               {/* Mobile Navigation */}
               <div className="flex md:hidden items-center gap-4">
-                <Link href="/lists/new">
+                <Link href="/items/new" title="Ajouter un item">
                   <PlusSquare className="h-6 w-6" />
                 </Link>
-                <NotificationCenter userId={user.id} />
+                {/* <NotificationCenter userId={user.id} /> */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
