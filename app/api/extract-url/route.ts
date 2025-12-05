@@ -23,18 +23,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch the page
+    // Fetch the page with realistic browser headers
     const response = await fetch(validUrl.toString(), {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MyWishList/1.0; +https://mywishlist.com)',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+        'Referer': validUrl.origin,
       },
       // Add timeout
       signal: AbortSignal.timeout(10000), // 10 seconds
     });
 
     if (!response.ok) {
+      // Detect common blocking scenarios
+      const domain = validUrl.hostname;
+      let errorMessage = 'Impossible de récupérer la page';
+      let suggestion = '';
+
+      if (response.status === 403) {
+        errorMessage = 'Ce site bloque l\'extraction automatique';
+        suggestion = 'Essayez de remplir les champs manuellement ou utilisez un autre site (Amazon, FNAC, etc.)';
+      } else if (response.status === 404) {
+        errorMessage = 'Page non trouvée';
+        suggestion = 'Vérifiez que le lien est correct';
+      } else if (response.status >= 500) {
+        errorMessage = 'Le site est temporairement indisponible';
+        suggestion = 'Réessayez dans quelques instants';
+      }
+
       return NextResponse.json(
-        { error: 'Impossible de récupérer la page' },
+        {
+          error: errorMessage,
+          suggestion,
+          status: response.status,
+          domain
+        },
         { status: 400 }
       );
     }

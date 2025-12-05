@@ -113,7 +113,16 @@ export default function NewItemPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'extraction');
+        // Show detailed error message with suggestion
+        const errorMsg = data.error || 'Erreur lors de l\'extraction';
+        const suggestion = data.suggestion || '';
+
+        toast({
+          variant: 'destructive',
+          title: errorMsg,
+          description: suggestion || 'Impossible d\'extraire les informations de cette URL.',
+        });
+        return;
       }
 
       // Fill the form with extracted data
@@ -139,11 +148,14 @@ export default function NewItemPage() {
       });
     } catch (error: any) {
       console.error('Error extracting URL:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: error.message || 'Impossible d\'extraire les informations de cette URL.',
-      });
+      // Error already handled above, this is for network errors
+      if (!error.message.includes('extraction')) {
+        toast({
+          variant: 'destructive',
+          title: 'Erreur réseau',
+          description: 'Vérifiez votre connexion internet et réessayez.',
+        });
+      }
     } finally {
       setIsExtracting(false);
     }
