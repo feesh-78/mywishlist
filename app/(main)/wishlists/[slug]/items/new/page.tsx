@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/lib/hooks/use-toast';
-import { Loader2, ArrowLeft, Heart } from 'lucide-react';
+import { Loader2, ArrowLeft, Heart, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { ImageUpload } from '@/components/shared/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,6 +44,7 @@ export default function NewItemPage() {
   const slug = params.slug as string;
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [wishlist, setWishlist] = useState<any>(null);
 
   const form = useForm({
@@ -83,6 +84,68 @@ export default function NewItemPage() {
     } catch (error) {
       console.error('Error loading wishlist:', error);
       router.push('/feed');
+    }
+  }
+
+  async function handleExtractUrl() {
+    const url = form.getValues('url');
+
+    if (!url || !url.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'URL manquante',
+        description: 'Veuillez saisir une URL de produit.',
+      });
+      return;
+    }
+
+    setIsExtracting(true);
+
+    try {
+      const response = await fetch('/api/extract-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de l\'extraction');
+      }
+
+      // Fill the form with extracted data
+      if (data.title) {
+        form.setValue('title', data.title);
+      }
+      if (data.description) {
+        form.setValue('description', data.description);
+      }
+      if (data.imageUrl) {
+        form.setValue('imageUrl', data.imageUrl);
+      }
+      if (data.price) {
+        form.setValue('price', data.price);
+      }
+      if (data.currency) {
+        form.setValue('currency', data.currency);
+      }
+
+      toast({
+        title: 'Informations extraites ! ✨',
+        description: 'Les champs ont été pré-remplis. Vous pouvez les modifier si besoin.',
+      });
+    } catch (error: any) {
+      console.error('Error extracting URL:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: error.message || 'Impossible d\'extraire les informations de cette URL.',
+      });
+    } finally {
+      setIsExtracting(false);
     }
   }
 
@@ -255,15 +318,37 @@ export default function NewItemPage() {
                   <FormItem>
                     <FormLabel>Lien du produit</FormLabel>
                     <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com/produit"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="space-y-2">
+                        <Input
+                          type="url"
+                          placeholder="https://example.com/produit"
+                          disabled={isLoading || isExtracting}
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleExtractUrl}
+                          disabled={isLoading || isExtracting || !field.value}
+                          className="w-full"
+                        >
+                          {isExtracting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Extraction en cours...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Extraire automatiquement les infos
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormDescription>
-                      URL où acheter le produit
+                      Collez l&apos;URL d&apos;un produit et cliquez sur le bouton pour remplir automatiquement les champs
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
