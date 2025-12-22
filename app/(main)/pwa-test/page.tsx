@@ -4,7 +4,12 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, AlertCircle, Copy } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Copy, Download } from 'lucide-react';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 export default function PWATestPage() {
   const [checks, setChecks] = useState({
@@ -16,9 +21,26 @@ export default function PWATestPage() {
   });
   const [manifestData, setManifestData] = useState<any>(null);
   const [swRegistration, setSwRegistration] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
     runChecks();
+
+    // Capturer l'événement beforeinstallprompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      const promptEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(promptEvent);
+      setCanInstall(true);
+      console.log('✅ beforeinstallprompt capturé');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   async function runChecks() {
@@ -72,11 +94,50 @@ export default function PWATestPage() {
     alert('📋 URL copiée !');
   }
 
+  async function handleInstall() {
+    if (!deferredPrompt) {
+      alert('❌ Le prompt d\'installation n\'est pas encore disponible. Attendez quelques secondes et réessayez.');
+      return;
+    }
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === 'accepted') {
+      alert('✅ Installation réussie !');
+    } else {
+      alert('❌ Installation annulée');
+    }
+
+    setDeferredPrompt(null);
+    setCanInstall(false);
+    runChecks();
+  }
+
   const allGreen = Object.values(checks).every((v) => v);
 
   return (
     <div className="container max-w-4xl py-8">
       <h1 className="text-3xl font-bold mb-6">🧪 Diagnostic PWA</h1>
+
+      {/* Bouton installation si disponible */}
+      {canInstall && !checks.standalone && (
+        <Card className="mb-6 border-2 border-blue-500 bg-blue-50 dark:bg-blue-950">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <Download className="h-12 w-12 text-blue-600 mx-auto mb-3" />
+              <h2 className="text-xl font-bold mb-2">🎉 Installation disponible !</h2>
+              <p className="text-muted-foreground mb-4">
+                L&apos;app peut maintenant être installée. Clique sur le bouton ci-dessous.
+              </p>
+              <Button onClick={handleInstall} size="lg" className="w-full sm:w-auto">
+                <Download className="h-4 w-4 mr-2" />
+                Installer MyWishList
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statut global */}
       <Card className="mb-6">
