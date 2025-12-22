@@ -1,8 +1,6 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +31,7 @@ const CATEGORIES = [
   'Autre',
 ];
 
-export default function AddProductPage() {
+function AddProductContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -496,5 +494,17 @@ export default function AddProductPage() {
         </Button>
       </form>
     </div>
+  );
+}
+
+export default function AddProductPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <AddProductContent />
+    </Suspense>
   );
 }
