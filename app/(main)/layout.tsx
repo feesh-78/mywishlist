@@ -1,6 +1,7 @@
 import { Header } from '@/components/shared/header';
 import { MobileLayout } from '@/components/mobile-layout-wrapper';
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
 
 export default function MainLayout({
   children,
@@ -27,10 +28,14 @@ export default function MainLayout({
               <a href="#" className="hover:text-primary">
                 Contact
               </a>
+              <a href="/pwa-test" className="hover:text-primary text-blue-500">
+                🧪 Test fonctionnalité
+              </a>
             </div>
           </div>
         </footer>
         <MobileLayout />
+        <PWAInstallPrompt />
       </div>
     </AuthProvider>
   );

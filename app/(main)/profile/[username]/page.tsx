@@ -20,7 +20,9 @@ import {
   UserPlus,
   UserMinus,
   List,
-  ShieldAlert
+  ShieldAlert,
+  Package,
+  Filter
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -33,15 +35,17 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
   const [wishlists, setWishlists] = useState<any[]>([]);
   const [shoppingLists, setShoppingLists] = useState<any[]>([]);
-  const [stats, setStats] = useState({ wishlists: 0, shoppingLists: 0, followers: 0, following: 0 });
+  const [stats, setStats] = useState({ products: 0, wishlists: 0, shoppingLists: 0, followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [productFilter, setProductFilter] = useState<'all' | 'wishlist' | 'purchased'>('all');
 
   const isOwnProfile = currentUser?.user_metadata?.username === username;
-  const defaultTab = searchParams.get('tab') || 'wishlists';
+  const defaultTab = searchParams.get('tab') || 'products';
 
   useEffect(() => {
     loadProfile();
@@ -88,6 +92,16 @@ export default function ProfilePage() {
 
       setShoppingLists(shoppingListsData || []);
 
+      // Load products
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('user_id', profileData.id)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+
+      setProducts(productsData || []);
+
       // Load stats
       const { count: wishlistCount } = await supabase
         .from('wishlists')
@@ -113,7 +127,14 @@ export default function ProfilePage() {
         .select('*', { count: 'exact', head: true })
         .eq('follower_id', profileData.id);
 
+      const { count: productsCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', profileData.id)
+        .eq('is_public', true);
+
       setStats({
+        products: productsCount || 0,
         wishlists: wishlistCount || 0,
         shoppingLists: shoppingListCount || 0,
         followers: followersCount || 0,
@@ -288,6 +309,10 @@ export default function ProfilePage() {
                 {/* Stats */}
                 <div className="flex gap-6">
                   <div className="text-center">
+                    <div className="text-2xl font-bold">{stats.products}</div>
+                    <div className="text-sm text-muted-foreground">Produits</div>
+                  </div>
+                  <div className="text-center">
                     <div className="text-2xl font-bold">{stats.wishlists}</div>
                     <div className="text-sm text-muted-foreground">Wishlists</div>
                   </div>
@@ -309,6 +334,10 @@ export default function ProfilePage() {
       {/* Tabs */}
       <Tabs defaultValue={defaultTab}>
         <TabsList className="mb-6">
+          <TabsTrigger value="products">
+            <Package className="h-4 w-4 mr-2" />
+            Produits
+          </TabsTrigger>
           <TabsTrigger value="wishlists">
             <Heart className="h-4 w-4 mr-2" />
             Wishlists
@@ -318,6 +347,124 @@ export default function ProfilePage() {
             Mes Achats
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="products">
+          {/* Filter Buttons */}
+          <div className="flex gap-2 mb-6">
+            <Button
+              variant={productFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProductFilter('all')}
+            >
+              Tous
+            </Button>
+            <Button
+              variant={productFilter === 'wishlist' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProductFilter('wishlist')}
+            >
+              💭 Envies
+            </Button>
+            <Button
+              variant={productFilter === 'purchased' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setProductFilter('purchased')}
+            >
+              ✅ Achetés
+            </Button>
+          </div>
+
+          {(() => {
+            const filteredProducts = productFilter === 'all'
+              ? products
+              : products.filter(p => p.product_type === productFilter);
+
+            if (filteredProducts.length === 0) {
+              return (
+                <div className="text-center py-12">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Aucun produit</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {isOwnProfile
+                      ? 'Ajoutez votre premier produit via un screenshot ou un lien !'
+                      : `@${username} n'a pas encore partagé de produit.`}
+                  </p>
+                  {isOwnProfile && (
+                    <Button asChild>
+                      <Link href="/add-product">Ajouter un produit</Link>
+                    </Button>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredProducts.map((product) => (
+                  <Link key={product.id} href={`/product/${product.id}`}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                      {/* Image */}
+                      {product.image_url && (
+                        <div className="relative aspect-square overflow-hidden bg-muted">
+                          <Image
+                            src={product.image_url}
+                            alt={product.title}
+                            fill
+                            className="object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
+                      {!product.image_url && (
+                        <div className="relative aspect-square bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                          <Package className="h-12 w-12 text-muted-foreground/50" />
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <CardContent className="p-3">
+                        <h3 className="font-semibold mb-1 line-clamp-2 text-sm">
+                          {product.title}
+                        </h3>
+
+                        {product.price && (
+                          <p className="text-lg font-bold text-primary mb-1">
+                            {product.price} {product.currency === 'EUR' ? '€' : product.currency === 'USD' ? '$' : '£'}
+                          </p>
+                        )}
+
+                        {product.brand && (
+                          <p className="text-xs text-muted-foreground mb-2">
+                            {product.brand}
+                          </p>
+                        )}
+
+                        {product.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Hash className="h-3 w-3 mr-1" />
+                            {product.category}
+                          </Badge>
+                        )}
+
+                        {/* Type Badge */}
+                        <div className="mt-2">
+                          {product.product_type === 'purchased' ? (
+                            <Badge variant="default" className="text-xs">
+                              ✅ Acheté
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              💭 Envie
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            );
+          })()}
+        </TabsContent>
 
         <TabsContent value="wishlists">
           {wishlists.length === 0 ? (

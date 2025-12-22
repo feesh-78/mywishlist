@@ -25,6 +25,7 @@ import {
   Search,
   Menu,
   ShoppingBag,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notification-center';
@@ -162,6 +163,12 @@ export function Header() {
                       <Link href="/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
                         Paramètres
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/pwa-test" className="cursor-pointer text-blue-600">
+                        <FlaskConical className="mr-2 h-4 w-4" />
+                        🧪 Test fonctionnalité
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
