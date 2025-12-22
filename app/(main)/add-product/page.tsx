@@ -17,19 +17,7 @@ import { Card } from '@/components/ui/card';
 import { Loader2, Sparkles, Image as ImageIcon, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/lib/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
-
-const CATEGORIES = [
-  'Mode',
-  'Tech',
-  'Déco',
-  'Sport',
-  'Beauté',
-  'Cuisine',
-  'Livres',
-  'Jeux',
-  'Voyage',
-  'Autre',
-];
+import { CategoryAutocomplete } from '@/components/ui/category-autocomplete';
 
 function AddProductContent() {
   const router = useRouter();
@@ -452,21 +440,13 @@ function AddProductContent() {
 
             <div>
               <Label htmlFor="category">Catégorie</Label>
-              <Select
+              <p className="text-sm text-muted-foreground mb-2">
+                Commencez à taper pour filtrer (ex: &quot;Foo&quot; → &quot;Football&quot;)
+              </p>
+              <CategoryAutocomplete
                 value={formData.category}
                 onValueChange={(value) => setFormData({ ...formData, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div>
