@@ -325,15 +325,38 @@ function AddProductContent() {
           <div>
             <Label htmlFor="screenshot">Screenshot (optionnel)</Label>
             <p className="text-sm text-muted-foreground mb-2">
-              Ajoutez un screenshot pour analyser avec l&apos;IA ✨
+              Ajoutez un screenshot comme image du produit
             </p>
             <Input
               id="screenshot"
               type="file"
               accept="image/*"
-              onChange={handleScreenshotChange}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setScreenshot(file);
+                  // Créer preview uniquement (pas d'analyse automatique)
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    setScreenshotPreview(e.target?.result as string);
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
               disabled={analyzing}
             />
+            {screenshotPreview && !analyzing && (
+              <Button
+                type="button"
+                onClick={() => screenshot && analyzeScreenshot(screenshot)}
+                className="mt-2 w-full"
+                variant="outline"
+                size="sm"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Analyser avec l&apos;IA (optionnel)
+              </Button>
+            )}
           </div>
 
           {analyzing && (
