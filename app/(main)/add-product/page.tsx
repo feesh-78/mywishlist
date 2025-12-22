@@ -153,7 +153,7 @@ function AddProductContent() {
     }
   };
 
-  // Analyser le screenshot avec Gemini
+  // Analyser le screenshot avec Ollama (GRATUIT, local)
   const analyzeScreenshot = async (file: File) => {
     setAnalyzing(true);
 
@@ -161,7 +161,7 @@ function AddProductContent() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('/api/analyze-screenshot', {
+      const response = await fetch('/api/analyze-screenshot-ollama', {
         method: 'POST',
         body: formData,
       });
