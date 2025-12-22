@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/shared/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { CategoryAutocomplete } from '@/components/ui/category-autocomplete';
 
 export default function EditWishlistPage() {
   const params = useParams();
@@ -265,12 +266,13 @@ export default function EditWishlistPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Catégorie</FormLabel>
+                    <FormDescription>
+                      Commencez à taper pour filtrer (ex: &quot;Foo&quot; → &quot;Football&quot;)
+                    </FormDescription>
                     <FormControl>
-                      <Input
-                        placeholder="Noël, Anniversaire, Mariage..."
-                        disabled={isSaving}
-                        {...field}
+                      <CategoryAutocomplete
                         value={field.value || ''}
+                        onValueChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />

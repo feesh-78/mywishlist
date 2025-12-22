@@ -28,6 +28,7 @@ import { useToast } from '@/lib/hooks/use-toast';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
+import { CategoryAutocomplete } from '@/components/ui/category-autocomplete';
 import { ImageUpload } from '@/components/shared/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
@@ -244,12 +245,13 @@ export default function NewWishlistPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Catégorie</FormLabel>
+                    <FormDescription>
+                      Commencez à taper pour filtrer (ex: &quot;Foo&quot; → &quot;Football&quot;)
+                    </FormDescription>
                     <FormControl>
-                      <Input
-                        placeholder="Noël, Anniversaire, Mariage..."
-                        disabled={isLoading}
-                        {...field}
+                      <CategoryAutocomplete
                         value={field.value || ''}
+                        onValueChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
