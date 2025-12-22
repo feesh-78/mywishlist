@@ -3,10 +3,13 @@
   "short_name": "MyWishList",
   "description": "Créez et partagez vos wishlists et achats avec vos proches",
   "start_url": "/feed",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait-primary",
+  "categories": ["lifestyle", "shopping"],
+  "lang": "fr",
   "icons": [
     {
       "src": "/icon-192.png",
