@@ -117,17 +117,21 @@ export function PWAInstall() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold min-w-[20px]">2.</span>
-                <span>Cherche <strong>&quot;Installer l&apos;application&quot;</strong> ou <strong>&quot;Ajouter à l&apos;écran d&apos;accueil&quot;</strong></span>
+                <span>Cherche <strong>&quot;Ajouter à l&apos;écran d&apos;accueil&quot;</strong> (ou &quot;Installer l&apos;application&quot; si disponible)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold min-w-[20px]">3.</span>
-                <span>Appuie dessus et confirme l&apos;installation</span>
+                <span>Appuie dessus et confirme</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold min-w-[20px]">4.</span>
+                <span>Ouvre l&apos;app depuis l&apos;icône sur ton écran d&apos;accueil</span>
               </li>
             </ol>
 
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3 mt-4">
-              <p className="text-xs text-blue-800 dark:text-blue-200">
-                💡 <strong>Important:</strong> Choisis bien &quot;Installer l&apos;application&quot; (pas juste &quot;Ajouter à l&apos;écran&quot;) pour que le partage depuis d&apos;autres apps fonctionne !
+            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded p-3 mt-4">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                ⚠️ <strong>Web Share Target:</strong> Le partage depuis d&apos;autres apps peut prendre 24-48h à fonctionner sur Android. En attendant, tu peux copier/coller les liens directement dans l&apos;app.
               </p>
             </div>
           </div>
@@ -145,7 +149,7 @@ export function PWAInstall() {
 
   // Bannière d'installation
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
