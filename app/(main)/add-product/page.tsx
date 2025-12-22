@@ -62,7 +62,28 @@ function AddProductContent() {
       const sharedUrl = searchParams.get('url');
       const isShared = searchParams.get('shared') === 'true';
 
+      console.log('🔍 Web Share Target - Données reçues:', {
+        sharedTitle,
+        sharedText,
+        sharedUrl,
+        isShared,
+      });
+
       if (sharedTitle || sharedText || sharedUrl) {
+        // Copier l'URL dans le presse-papier si disponible
+        if (sharedUrl && navigator.clipboard) {
+          try {
+            await navigator.clipboard.writeText(sharedUrl);
+            console.log('📋 URL copiée dans le presse-papier:', sharedUrl);
+            toast({
+              title: '📋 Lien copié !',
+              description: 'Le lien a été copié dans le presse-papier',
+            });
+          } catch (error) {
+            console.error('❌ Erreur copie presse-papier:', error);
+          }
+        }
+
         setFormData(prev => ({
           ...prev,
           title: sharedTitle || prev.title,
@@ -72,6 +93,11 @@ function AddProductContent() {
 
         // Si c'est un partage ET qu'on a une URL, extraire automatiquement
         if (isShared && sharedUrl) {
+          toast({
+            title: '🔄 Extraction en cours...',
+            description: 'Analyse automatique du lien partagé',
+          });
+
           // Attendre un peu pour que le formulaire soit rempli
           setTimeout(() => {
             extractFromUrl(sharedUrl);

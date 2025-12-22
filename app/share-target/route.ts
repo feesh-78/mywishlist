@@ -9,6 +9,12 @@ export async function POST(request: NextRequest) {
     const text = formData.get('text') as string || '';
     const url = formData.get('url') as string || '';
 
+    console.log('📨 Web Share Target POST - Données reçues:', {
+      title,
+      text,
+      url,
+    });
+
     // Extraire l'URL depuis le texte si elle n'est pas dans le champ url
     let sharedUrl = url;
     if (!sharedUrl && text) {
@@ -16,6 +22,7 @@ export async function POST(request: NextRequest) {
       const urlMatch = text.match(/https?:\/\/[^\s]+/);
       if (urlMatch) {
         sharedUrl = urlMatch[0];
+        console.log('🔗 URL extraite du texte:', sharedUrl);
       }
     }
 
@@ -29,9 +36,11 @@ export async function POST(request: NextRequest) {
     // Ajouter un flag pour indiquer que c'est un partage
     redirectUrl.searchParams.set('shared', 'true');
 
+    console.log('➡️ Redirection vers:', redirectUrl.toString());
+
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
-    console.error('Erreur share-target:', error);
+    console.error('❌ Erreur share-target POST:', error);
     // En cas d'erreur, rediriger vers /add-product sans paramètres
     return NextResponse.redirect(new URL('/add-product', request.url));
   }
@@ -45,11 +54,19 @@ export async function GET(request: NextRequest) {
   const text = searchParams.get('text') || '';
   const url = searchParams.get('url') || '';
 
+  console.log('📨 Web Share Target GET - Données reçues:', {
+    title,
+    text,
+    url,
+  });
+
   const redirectUrl = new URL('/add-product', request.url);
   if (title) redirectUrl.searchParams.set('title', title);
   if (text) redirectUrl.searchParams.set('text', text);
   if (url) redirectUrl.searchParams.set('url', url);
   redirectUrl.searchParams.set('shared', 'true');
+
+  console.log('➡️ Redirection vers:', redirectUrl.toString());
 
   return NextResponse.redirect(redirectUrl);
 }
