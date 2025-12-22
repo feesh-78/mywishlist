@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
-import { Download, X } from 'lucide-react';
+import { Download, X, Menu } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,7 +11,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showManualInstructions, setShowManualInstructions] = useState(false);
 
   useEffect(() => {
     // Enregistrement du service worker
@@ -28,25 +31,34 @@ export function PWAInstall() {
       });
     }
 
-    // Capturer l'événement beforeinstallprompt
-    const handleBeforeInstallPrompt = (e: Event) => {
-      // Empêcher la mini-infobar automatique de Chrome
-      e.preventDefault();
+    // Détecter Android
+    const userAgent = navigator.userAgent.toLowerCase();
+    const android = /android/.test(userAgent);
+    setIsAndroid(android);
 
+    // Vérifier si déjà installé
+    const installed = window.matchMedia('(display-mode: standalone)').matches;
+    setIsInstalled(installed);
+
+    // Si Android et pas installé, montrer la bannière après 3 secondes
+    if (android && !installed) {
+      const dismissed = localStorage.getItem('pwa-install-dismissed');
+      if (!dismissed) {
+        setTimeout(() => {
+          setShowInstallBanner(true);
+        }, 3000);
+      }
+    }
+
+    // Capturer l'événement beforeinstallprompt (bonus si disponible)
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
       const promptEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(promptEvent);
-      setShowInstallButton(true);
-
-      console.log('✅ beforeinstallprompt capturé - bouton installation affiché');
+      console.log('✅ beforeinstallprompt capturé');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Vérifier si l'app est déjà installée
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      console.log('✅ App déjà installée');
-      setShowInstallButton(false);
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -54,40 +66,84 @@ export function PWAInstall() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      console.log('❌ Pas de prompt disponible');
-      return;
-    }
+    // Si on a le prompt, l'utiliser
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
 
-    // Afficher le prompt d'installation
-    deferredPrompt.prompt();
+      if (outcome === 'accepted') {
+        console.log('✅ Installation acceptée');
+        setShowInstallBanner(false);
+      }
 
-    // Attendre la réponse de l'utilisateur
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === 'accepted') {
-      console.log('✅ Utilisateur a accepté l\'installation');
+      setDeferredPrompt(null);
     } else {
-      console.log('❌ Utilisateur a refusé l\'installation');
+      // Sinon, montrer les instructions manuelles
+      setShowManualInstructions(true);
     }
-
-    // On ne peut utiliser le prompt qu'une seule fois
-    setDeferredPrompt(null);
-    setShowInstallButton(false);
   };
 
   const handleDismiss = () => {
-    setShowInstallButton(false);
-    // Sauvegarder dans localStorage pour ne pas embêter l'utilisateur
+    setShowInstallBanner(false);
     localStorage.setItem('pwa-install-dismissed', 'true');
   };
 
-  // Ne rien afficher si on ne doit pas montrer le bouton
-  if (!showInstallButton) {
+  // Ne rien afficher si installé ou pas Android
+  if (isInstalled || !isAndroid || !showInstallBanner) {
     return null;
   }
 
-  // Bannière d'installation en haut de page
+  // Instructions manuelles
+  if (showManualInstructions) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-6">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-lg font-bold">📱 Installer MyWishList</h3>
+            <button onClick={() => setShowManualInstructions(false)} className="text-gray-500">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4 text-sm">
+            <p className="text-gray-600 dark:text-gray-400">
+              Pour installer l&apos;application sur ton téléphone :
+            </p>
+
+            <ol className="list-decimal list-inside space-y-3 text-gray-700 dark:text-gray-300">
+              <li className="flex items-start gap-2">
+                <span className="font-bold min-w-[20px]">1.</span>
+                <span>Appuie sur le menu <Menu className="inline h-4 w-4" /> (3 points) en haut à droite de Chrome</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold min-w-[20px]">2.</span>
+                <span>Cherche <strong>&quot;Installer l&apos;application&quot;</strong> ou <strong>&quot;Ajouter à l&apos;écran d&apos;accueil&quot;</strong></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold min-w-[20px]">3.</span>
+                <span>Appuie dessus et confirme l&apos;installation</span>
+              </li>
+            </ol>
+
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3 mt-4">
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                💡 <strong>Important:</strong> Choisis bien &quot;Installer l&apos;application&quot; (pas juste &quot;Ajouter à l&apos;écran&quot;) pour que le partage depuis d&apos;autres apps fonctionne !
+              </p>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => setShowManualInstructions(false)}
+            className="w-full mt-6"
+          >
+            J&apos;ai compris
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Bannière d'installation
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-3">
@@ -97,7 +153,7 @@ export function PWAInstall() {
             <div>
               <p className="font-semibold text-sm">Installer MyWishList</p>
               <p className="text-xs opacity-90">
-                Accès rapide et partage de produits depuis d&apos;autres apps
+                Partage de produits depuis d&apos;autres apps
               </p>
             </div>
           </div>
