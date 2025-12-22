@@ -100,19 +100,19 @@ export function PWAInstallPrompt() {
             // Instructions iOS
             <div className="space-y-2 mb-3">
               <p className="text-xs text-muted-foreground">
-                Pour installer l'app sur iPhone :
+                Pour installer l&apos;app sur iPhone :
               </p>
               <ol className="text-xs space-y-1 list-decimal list-inside text-muted-foreground">
                 <li>Appuie sur <strong>Partager</strong> en bas</li>
-                <li>Fais défiler et appuie sur <strong>"Sur l'écran d'accueil"</strong></li>
-                <li>Appuie sur <strong>"Ajouter"</strong></li>
+                <li>Fais défiler et appuie sur <strong>&quot;Sur l&apos;écran d&apos;accueil&quot;</strong></li>
+                <li>Appuie sur <strong>&quot;Ajouter&quot;</strong></li>
               </ol>
             </div>
           ) : (
             // Bouton install Android/Desktop
             <Button onClick={handleInstall} className="w-full mb-3" size="sm">
               <Download className="h-4 w-4 mr-2" />
-              Installer l'application
+              Installer l&apos;application
             </Button>
           )}
 

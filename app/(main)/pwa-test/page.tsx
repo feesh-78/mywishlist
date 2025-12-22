@@ -86,7 +86,7 @@ export default function PWATestPage() {
               <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">✅ PWA Prête !</h2>
               <p className="text-muted-foreground">
-                Tous les critères sont remplis. Tu peux maintenant partager des liens vers l'app.
+                Tous les critères sont remplis. Tu peux maintenant partager des liens vers l&apos;app.
               </p>
             </div>
           ) : (
@@ -188,7 +188,7 @@ export default function PWATestPage() {
               <div>
                 <h3 className="font-semibold">App installée (Standalone)</h3>
                 <p className="text-sm text-muted-foreground">
-                  L'app doit être ajoutée à l'écran d'accueil
+                  L&apos;app doit être ajoutée à l&apos;écran d&apos;accueil
                 </p>
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function PWATestPage() {
       {/* Instructions */}
       <Card>
         <CardHeader>
-          <CardTitle>📱 Instructions d'installation</CardTitle>
+          <CardTitle>📱 Instructions d&apos;installation</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -232,9 +232,9 @@ export default function PWATestPage() {
             <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
               <li>Ouvre ce site dans Safari</li>
               <li>Appuie sur le bouton Partager (carré avec flèche)</li>
-              <li>Fais défiler et appuie sur "Sur l'écran d'accueil"</li>
-              <li>Appuie sur "Ajouter"</li>
-              <li>Ouvre l'app depuis ton écran d'accueil</li>
+              <li>Fais défiler et appuie sur &quot;Sur l&apos;écran d&apos;accueil&quot;</li>
+              <li>Appuie sur &quot;Ajouter&quot;</li>
+              <li>Ouvre l&apos;app depuis ton écran d&apos;accueil</li>
               <li>Rafraîchis cette page pour vérifier</li>
             </ol>
           </div>
@@ -244,9 +244,9 @@ export default function PWATestPage() {
             <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
               <li>Ouvre ce site dans Chrome</li>
               <li>Appuie sur les 3 points en haut à droite</li>
-              <li>Appuie sur "Installer l'application"</li>
-              <li>Confirme l'installation</li>
-              <li>Ouvre l'app</li>
+              <li>Appuie sur &quot;Installer l&apos;application&quot;</li>
+              <li>Confirme l&apos;installation</li>
+              <li>Ouvre l&apos;app</li>
               <li>Rafraîchis cette page pour vérifier</li>
             </ol>
           </div>
@@ -254,7 +254,7 @@ export default function PWATestPage() {
           <div className="flex items-center gap-2">
             <Button onClick={copyUrl} variant="outline">
               <Copy className="h-4 w-4 mr-2" />
-              Copier l'URL du site
+              Copier l&apos;URL du site
             </Button>
             <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">
               {typeof window !== 'undefined' ? window.location.origin : ''}

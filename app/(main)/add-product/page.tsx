@@ -325,7 +325,7 @@ export default function AddProductPage() {
           <div>
             <Label htmlFor="screenshot">Screenshot (optionnel)</Label>
             <p className="text-sm text-muted-foreground mb-2">
-              Ajoutez un screenshot pour analyser avec l'IA ✨
+              Ajoutez un screenshot pour analyser avec l&apos;IA ✨
             </p>
             <Input
               id="screenshot"
