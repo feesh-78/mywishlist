@@ -15,8 +15,9 @@ export const config = {
      * - manifest.json (PWA manifest)
      * - sw.js (service worker)
      * - icon-*.png (PWA icons)
+     * - share-target (Web Share Target API endpoint)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icon-.*\\.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icon-.*\\.png|share-target|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
