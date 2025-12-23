@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,64 +41,8 @@ function AddProductContent() {
     listType: 'wishlist', // wishlist ou shopping_list
   });
 
-  // Détecter si on vient d'un partage (Web Share Target)
-  useEffect(() => {
-    const handleShare = async () => {
-      // Vérifier si on a des données de partage dans les query params
-      const sharedTitle = searchParams.get('title');
-      const sharedText = searchParams.get('text');
-      const sharedUrl = searchParams.get('url');
-      const isShared = searchParams.get('shared') === 'true';
-
-      console.log('🔍 Web Share Target - Données reçues:', {
-        sharedTitle,
-        sharedText,
-        sharedUrl,
-        isShared,
-      });
-
-      if (sharedTitle || sharedText || sharedUrl) {
-        // Copier l'URL dans le presse-papier si disponible
-        if (sharedUrl && navigator.clipboard) {
-          try {
-            await navigator.clipboard.writeText(sharedUrl);
-            console.log('📋 URL copiée dans le presse-papier:', sharedUrl);
-            toast({
-              title: '📋 Lien copié !',
-              description: 'Le lien a été copié dans le presse-papier',
-            });
-          } catch (error) {
-            console.error('❌ Erreur copie presse-papier:', error);
-          }
-        }
-
-        setFormData(prev => ({
-          ...prev,
-          title: sharedTitle || prev.title,
-          description: sharedText || prev.description,
-          url: sharedUrl || prev.url,
-        }));
-
-        // Si c'est un partage ET qu'on a une URL, extraire automatiquement
-        if (isShared && sharedUrl) {
-          toast({
-            title: '🔄 Extraction en cours...',
-            description: 'Analyse automatique du lien partagé',
-          });
-
-          // Attendre un peu pour que le formulaire soit rempli
-          setTimeout(() => {
-            extractFromUrl(sharedUrl);
-          }, 500);
-        }
-      }
-    };
-
-    handleShare();
-  }, [searchParams]);
-
-  // Fonction d'extraction d'URL séparée pour la réutiliser
-  const extractFromUrl = async (url: string) => {
+  // Fonction d'extraction d'URL avec useCallback
+  const extractFromUrl = useCallback(async (url: string) => {
     setAnalyzing(true);
     try {
       const response = await fetch('/api/extract-url', {
@@ -139,7 +83,58 @@ function AddProductContent() {
     } finally {
       setAnalyzing(false);
     }
-  };
+  }, [toast]);
+
+  // Détecter si on vient d'un partage (Web Share Target)
+  useEffect(() => {
+    const handleShare = async () => {
+      // Vérifier si on a des données de partage dans les query params
+      const sharedTitle = searchParams.get('title');
+      const sharedText = searchParams.get('text');
+      const sharedUrl = searchParams.get('url');
+      const isShared = searchParams.get('shared') === 'true';
+
+      console.log('🔍 Web Share Target - Données reçues:', {
+        sharedTitle,
+        sharedText,
+        sharedUrl,
+        isShared,
+      });
+
+      if (sharedTitle || sharedText || sharedUrl) {
+        // Copier l'URL dans le presse-papier si disponible
+        if (sharedUrl && navigator.clipboard) {
+          try {
+            await navigator.clipboard.writeText(sharedUrl);
+            console.log('📋 URL copiée dans le presse-papier:', sharedUrl);
+            toast({
+              title: '🔗 Lien détecté !',
+              description: 'Extraction automatique en cours...',
+            });
+          } catch (error) {
+            console.error('❌ Erreur copie presse-papier:', error);
+          }
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          title: sharedTitle || prev.title,
+          description: sharedText || prev.description,
+          url: sharedUrl || prev.url,
+        }));
+
+        // Si c'est un partage ET qu'on a une URL, extraire automatiquement
+        if (isShared && sharedUrl) {
+          // Attendre un peu pour que le formulaire soit rempli
+          setTimeout(() => {
+            extractFromUrl(sharedUrl);
+          }, 500);
+        }
+      }
+    };
+
+    handleShare();
+  }, [searchParams, toast, extractFromUrl]);
 
   // Analyser le screenshot avec Ollama (GRATUIT, local)
   const analyzeScreenshot = async (file: File) => {
@@ -309,18 +304,17 @@ function AddProductContent() {
                 id="url-input"
                 type="url"
                 placeholder="https://www.amazon.fr/..."
+                value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 disabled={analyzing}
               />
               <Button
                 type="button"
-                onClick={async (e) => {
-                  const input = document.getElementById('url-input') as HTMLInputElement;
-                  const url = input.value;
-                  if (!url) return;
-
-                  extractFromUrl(url);
+                onClick={() => {
+                  if (!formData.url) return;
+                  extractFromUrl(formData.url);
                 }}
-                disabled={analyzing}
+                disabled={analyzing || !formData.url}
               >
                 {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Extraire'}
               </Button>
@@ -458,22 +452,6 @@ function AddProductContent() {
                 placeholder="Description du produit..."
                 rows={3}
               />
-            </div>
-
-            <div>
-              <Label htmlFor="url">Lien du produit</Label>
-              <Input
-                id="url"
-                type="url"
-                value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                placeholder="https://..."
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                ✅ Rempli automatiquement depuis le lien extrait
-              </p>
             </div>
 
             {/* Aperçu de l'image du produit */}
