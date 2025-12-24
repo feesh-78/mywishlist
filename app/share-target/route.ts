@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🎯 Web Share Target POST appelé !');
+    console.log('🔗 Request URL:', request.url);
+    console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
+
     const formData = await request.formData();
+    console.log('📦 FormData entries:', Array.from(formData.entries()));
 
     // Récupérer les données partagées
     const title = formData.get('title') as string || '';
