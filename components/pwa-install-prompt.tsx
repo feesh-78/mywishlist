@@ -5,14 +5,21 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Download, Smartphone } from 'lucide-react';
 import Link from 'next/link';
+import { usePlatform } from '@/lib/hooks/use-platform';
 
 export function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const { isDesktop, isCapacitor } = usePlatform();
 
   useEffect(() => {
+    // NE PAS afficher sur desktop ni dans l'app Capacitor
+    if (isDesktop || isCapacitor) {
+      return;
+    }
+
     // Vérifier si c'est iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(iOS);
@@ -44,7 +51,7 @@ export function PWAInstallPrompt() {
       clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [isDesktop, isCapacitor]);
 
   async function handleInstall() {
     if (deferredPrompt) {

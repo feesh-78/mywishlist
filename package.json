@@ -9,6 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/share": "^8.0.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
     "@masonry-grid/react": "^1.1.1",
@@ -49,6 +54,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@bubblewrap/cli": "^1.24.1",
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

@@ -58,10 +58,24 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.sephora.fr',
       },
+      // Jules
+      {
+        protocol: 'https',
+        hostname: '**.jules.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'media.jules.com',
+      },
       // Autres domaines courants
       {
         protocol: 'https',
         hostname: 'cdn.shopify.com',
+      },
+      // Wildcard pour supporter tous les sites e-commerce
+      {
+        protocol: 'https',
+        hostname: '**',
       },
       {
         protocol: 'http',
