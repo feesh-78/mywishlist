@@ -5,13 +5,12 @@ CREATE TABLE IF NOT EXISTS views (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   item_id UUID NOT NULL REFERENCES wishlist_items(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+  view_date DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
 
--- Index unique pour garantir max 1 vue par jour par user/item
--- On utilise un index au lieu d'une contrainte car on a une expression (created_at::date)
-CREATE UNIQUE INDEX IF NOT EXISTS views_unique_user_item_per_day
-  ON views (user_id, item_id, (created_at::date));
+  -- Contrainte unique: max 1 vue par jour par user/item
+  CONSTRAINT views_unique_user_item_per_day UNIQUE (user_id, item_id, view_date)
+);
 
 -- Index pour performance
 CREATE INDEX IF NOT EXISTS views_item_id_idx ON views(item_id);

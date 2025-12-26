@@ -66,6 +66,7 @@ export async function trackItemView(
     const { error } = await supabase.from('views').insert({
       item_id: itemId,
       user_id: userId || null,
+      // view_date sera automatiquement rempli avec CURRENT_DATE
     });
 
     // Si erreur de contrainte unique, c'est normal (déjà vu aujourd'hui)
