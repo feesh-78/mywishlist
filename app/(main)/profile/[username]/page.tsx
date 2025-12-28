@@ -256,7 +256,7 @@ export default function ProfilePage() {
               onUpdate={(url) => setProfile({ ...profile, cover_photo_url: url })}
             />
           ) : (
-            <div className="relative w-full h-48 md:h-64 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
+            <div className="relative w-full h-32 md:h-40 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
               {profile.cover_photo_url && (
                 <Image
                   src={profile.cover_photo_url}
@@ -270,7 +270,7 @@ export default function ProfilePage() {
           )}
 
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-6 -mt-16 md:-mt-20">
+            <div className="flex flex-col md:flex-row gap-6 -mt-12 md:-mt-14">
               {/* Avatar */}
               {isOwnProfile ? (
                 <AvatarUpload

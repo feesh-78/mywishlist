@@ -54,7 +54,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background pt-safe">
-      <div className="container mx-auto px-4 pt-4">
+      <div className="container mx-auto px-4 pt-6">
         <div className="flex h-12 items-center justify-between max-w-6xl mx-auto">
           {/* Logo */}
           <Link href="/feed" className="flex items-center space-x-2 flex-shrink-0">

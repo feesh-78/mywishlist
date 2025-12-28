@@ -92,7 +92,7 @@ export function CoverPhotoUpload({ userId, currentCoverUrl, onUpdate }: CoverPho
   }
 
   return (
-    <div className="relative w-full h-48 md:h-64 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-lg overflow-hidden group">
+    <div className="relative w-full h-32 md:h-40 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-lg overflow-hidden group">
       {previewUrl && (
         <Image
           src={previewUrl}
