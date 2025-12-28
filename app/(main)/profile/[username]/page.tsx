@@ -16,18 +16,17 @@ import {
   Share2,
   Bookmark,
   Hash,
-  Settings,
   UserPlus,
   UserMinus,
   List,
-  ShieldAlert,
   Package,
   Filter
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ProfileMenu } from '@/components/profile/profile-menu';
 import { FollowersDialog } from '@/components/profile/followers-dialog';
+import { CoverPhotoUpload } from '@/components/profile/cover-photo-upload';
+import { AvatarUpload } from '@/components/profile/avatar-upload';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -77,7 +76,10 @@ export default function ProfilePage() {
       // Load wishlists (type = wishlist)
       const { data: wishlistsData } = await supabase
         .from('wishlists')
-        .select('*')
+        .select(`
+          *,
+          items:wishlist_items(count)
+        `)
         .eq('user_id', profileData.id)
         .eq('is_public', true)
         .eq('list_type', 'wishlist')
@@ -245,65 +247,75 @@ export default function ProfilePage() {
     <div className="max-w-6xl mx-auto">
       {/* Profile Header */}
       <div className="mb-8">
-        <Card>
+        <Card className="overflow-hidden">
+          {/* Cover Photo */}
+          {isOwnProfile ? (
+            <CoverPhotoUpload
+              userId={profile.id}
+              currentCoverUrl={profile.cover_photo_url}
+              onUpdate={(url) => setProfile({ ...profile, cover_photo_url: url })}
+            />
+          ) : (
+            <div className="relative w-full h-48 md:h-64 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
+              {profile.cover_photo_url && (
+                <Image
+                  src={profile.cover_photo_url}
+                  alt="Photo de couverture"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              )}
+            </div>
+          )}
+
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col md:flex-row gap-6 -mt-16 md:-mt-20">
               {/* Avatar */}
-              <Avatar className="h-24 w-24 md:h-32 md:w-32">
-                <AvatarImage src={profile.avatar_url} alt={profile.username} />
-                <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl">
-                  {profile.username?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              {isOwnProfile ? (
+                <AvatarUpload
+                  userId={profile.id}
+                  currentAvatarUrl={profile.avatar_url}
+                  username={profile.username}
+                  onUpdate={(url) => setProfile({ ...profile, avatar_url: url })}
+                />
+              ) : (
+                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background">
+                  <AvatarImage src={profile.avatar_url} alt={profile.username} />
+                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl">
+                    {profile.username?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              )}
 
               {/* Profile Info */}
               <div className="flex-1">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold mb-1">
-                      {profile.full_name || profile.username}
-                    </h1>
-                    <p className="text-muted-foreground">@{profile.username}</p>
-                  </div>
+                <div className="mb-4">
+                  <h1 className="text-2xl font-bold mb-1">
+                    {profile.full_name || profile.username}
+                  </h1>
+                  <p className="text-muted-foreground mb-4">@{profile.username}</p>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 items-center">
-                    {isOwnProfile ? (
-                      <>
-                        <Button variant="outline" asChild className="hidden md:flex">
-                          <Link href="/settings">
-                            <Settings className="h-4 w-4 mr-2" />
-                            Modifier le profil
-                          </Link>
-                        </Button>
-                        <Button variant="outline" asChild className="hidden md:flex">
-                          <Link href="/account">
-                            <ShieldAlert className="h-4 w-4 mr-2" />
-                            Gérer mon compte
-                          </Link>
-                        </Button>
-                        <ProfileMenu />
-                      </>
-                    ) : (
-                      <Button
-                        onClick={handleFollow}
-                        disabled={isFollowLoading}
-                        variant={isFollowing ? 'outline' : 'default'}
-                      >
-                        {isFollowing ? (
-                          <>
-                            <UserMinus className="h-4 w-4 mr-2" />
-                            Ne plus suivre
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Suivre
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                  {/* Follow button for other profiles */}
+                  {!isOwnProfile && (
+                    <Button
+                      onClick={handleFollow}
+                      disabled={isFollowLoading}
+                      variant={isFollowing ? 'outline' : 'default'}
+                    >
+                      {isFollowing ? (
+                        <>
+                          <UserMinus className="h-4 w-4 mr-2" />
+                          Ne plus suivre
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Suivre
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
 
                 {/* Bio */}
@@ -500,65 +512,52 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-              {wishlists.map((wishlist) => (
-                <Card
-                  key={wishlist.id}
-                  className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                >
-                  {/* Image */}
-                  {wishlist.cover_image_url && (
-                    <div className="relative aspect-video overflow-hidden">
-                      <Image
-                        src={wishlist.cover_image_url}
-                        alt={wishlist.title}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  )}
+              {wishlists.map((wishlist) => {
+                const itemCount = Array.isArray(wishlist.items) ? wishlist.items.length : 0;
 
-                  {/* Content */}
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-1 line-clamp-2">{wishlist.title}</h3>
-                    {wishlist.category && (
-                      <Badge variant="secondary" className="mb-2">
-                        <Hash className="h-3 w-3 mr-1" />
-                        {wishlist.category}
-                      </Badge>
-                    )}
-                    {wishlist.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {wishlist.description}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Créée le {new Date(wishlist.created_at).toLocaleDateString('fr-FR')}
-                    </p>
+                return (
+                  <Link key={wishlist.id} href={`/wishlists/${wishlist.slug}`}>
+                    <Card className="break-inside-avoid overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                      {/* Image */}
+                      {wishlist.cover_image_url && (
+                        <div className="relative aspect-video overflow-hidden">
+                          <Image
+                            src={wishlist.cover_image_url}
+                            alt={wishlist.title}
+                            fill
+                            className="object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" className="h-8 px-2">
-                          <Heart className="h-4 w-4 mr-1" />
-                          <span className="text-xs">0</span>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 px-2">
-                          <MessageCircle className="h-4 w-4 mr-1" />
-                          <span className="text-xs">0</span>
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Share2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Bookmark className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      {/* Content */}
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold mb-1 line-clamp-2">{wishlist.title}</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          {wishlist.category && (
+                            <Badge variant="secondary">
+                              <Hash className="h-3 w-3 mr-1" />
+                              {wishlist.category}
+                            </Badge>
+                          )}
+                          <Badge variant="outline">
+                            <Package className="h-3 w-3 mr-1" />
+                            {itemCount} {itemCount > 1 ? 'produits' : 'produit'}
+                          </Badge>
+                        </div>
+                        {wishlist.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {wishlist.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Créée le {new Date(wishlist.created_at).toLocaleDateString('fr-FR')}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </TabsContent>

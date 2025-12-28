@@ -25,7 +25,10 @@ import {
   Search,
   Menu,
   ShoppingBag,
-  FlaskConical,
+  Lock,
+  Info,
+  Shield,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notification-center';
@@ -51,8 +54,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background pt-safe">
-      <div className="container mx-auto px-4 pt-2">
-        <div className="flex h-14 items-center justify-between max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 pt-4">
+        <div className="flex h-12 items-center justify-between max-w-6xl mx-auto">
           {/* Logo */}
           <Link href="/feed" className="flex items-center space-x-2 flex-shrink-0">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -159,6 +162,7 @@ export function Header() {
                         Mes achats
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
@@ -166,9 +170,28 @@ export function Header() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/pwa-test" className="cursor-pointer text-blue-600">
-                        <FlaskConical className="mr-2 h-4 w-4" />
-                        🧪 Test fonctionnalité
+                      <Link href="/reset-password" className="cursor-pointer">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Changer le mot de passe
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/about" className="cursor-pointer">
+                        <Info className="mr-2 h-4 w-4" />
+                        À propos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/privacy" className="cursor-pointer">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Confidentialité
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/contact" className="cursor-pointer">
+                        <Mail className="mr-2 h-4 w-4" />
+                        Contact
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

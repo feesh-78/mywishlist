@@ -141,7 +141,13 @@ export default function FeedPage() {
         return;
       }
 
-      setWishlists(data || []);
+      // Filter out wishlists with 0 items from feed
+      const wishlistsWithItems = (data || []).filter((wishlist: any) => {
+        const itemCount = Array.isArray(wishlist.items) ? wishlist.items.length : 0;
+        return itemCount > 0;
+      });
+
+      setWishlists(wishlistsWithItems);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -737,37 +743,47 @@ export default function FeedPage() {
               ) : (
                 /* Grille 3 colonnes pour wishlists */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {wishlists.map((wishlist) => (
-                    <Card key={wishlist.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <CardContent className="p-4">
-                        <Link href={`/wishlists/${wishlist.slug}`}>
-                          <h3 className="font-semibold mb-2">{wishlist.title}</h3>
-                        </Link>
-                        {wishlist.description && (
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                            {wishlist.description}
-                          </p>
-                        )}
-                        {wishlist.category && (
-                          <Badge variant="outline" className="mb-2">
-                            <Hash className="h-3 w-3 mr-1" />
-                            {wishlist.category}
-                          </Badge>
-                        )}
-                        <div className="flex items-center gap-2 mt-3">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={wishlist.profile?.avatar_url} />
-                            <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
-                              {wishlist.profile?.username?.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-muted-foreground">
-                            @{wishlist.profile?.username}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {wishlists.map((wishlist) => {
+                    const itemCount = Array.isArray(wishlist.items) ? wishlist.items.length : 0;
+
+                    return (
+                      <Link key={wishlist.id} href={`/wishlists/${wishlist.slug}`}>
+                        <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold mb-2">{wishlist.title}</h3>
+                            {wishlist.description && (
+                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                {wishlist.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mb-2">
+                              {wishlist.category && (
+                                <Badge variant="outline">
+                                  <Hash className="h-3 w-3 mr-1" />
+                                  {wishlist.category}
+                                </Badge>
+                              )}
+                              <Badge variant="secondary">
+                                <Gift className="h-3 w-3 mr-1" />
+                                {itemCount} {itemCount > 1 ? 'produits' : 'produit'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-3">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={wishlist.profile?.avatar_url} />
+                                <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
+                                  {wishlist.profile?.username?.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-muted-foreground">
+                                @{wishlist.profile?.username}
+                              </span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </>
