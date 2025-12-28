@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ProfileMenu } from '@/components/profile/profile-menu';
+import { FollowersDialog } from '@/components/profile/followers-dialog';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -43,6 +45,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [productFilter, setProductFilter] = useState<'all' | 'wishlist' | 'purchased'>('all');
+  const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
+  const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
 
   const isOwnProfile = currentUser?.user_metadata?.username === username;
   const defaultTab = searchParams.get('tab') || 'products';
@@ -255,7 +259,7 @@ export default function ProfilePage() {
               {/* Profile Info */}
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h1 className="text-2xl font-bold mb-1">
                       {profile.full_name || profile.username}
                     </h1>
@@ -263,21 +267,22 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     {isOwnProfile ? (
                       <>
-                        <Button variant="outline" asChild>
+                        <Button variant="outline" asChild className="hidden md:flex">
                           <Link href="/settings">
                             <Settings className="h-4 w-4 mr-2" />
                             Modifier le profil
                           </Link>
                         </Button>
-                        <Button variant="outline" asChild>
+                        <Button variant="outline" asChild className="hidden md:flex">
                           <Link href="/account">
                             <ShieldAlert className="h-4 w-4 mr-2" />
                             Gérer mon compte
                           </Link>
                         </Button>
+                        <ProfileMenu />
                       </>
                     ) : (
                       <Button
@@ -319,14 +324,20 @@ export default function ProfilePage() {
                   {/* Followers/Following visibles uniquement sur son propre profil */}
                   {isOwnProfile && (
                     <>
-                      <div className="text-center">
+                      <button
+                        onClick={() => setFollowersDialogOpen(true)}
+                        className="text-center hover:opacity-70 transition-opacity"
+                      >
                         <div className="text-2xl font-bold">{stats.followers}</div>
                         <div className="text-sm text-muted-foreground">Followers</div>
-                      </div>
-                      <div className="text-center">
+                      </button>
+                      <button
+                        onClick={() => setFollowingDialogOpen(true)}
+                        className="text-center hover:opacity-70 transition-opacity"
+                      >
                         <div className="text-2xl font-bold">{stats.following}</div>
                         <div className="text-sm text-muted-foreground">Following</div>
-                      </div>
+                      </button>
                     </>
                   )}
                 </div>
@@ -633,6 +644,26 @@ export default function ProfilePage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs pour les listes de followers/following */}
+      {profile && (
+        <>
+          <FollowersDialog
+            open={followersDialogOpen}
+            onOpenChange={setFollowersDialogOpen}
+            userId={profile.id}
+            type="followers"
+            initialCount={stats.followers}
+          />
+          <FollowersDialog
+            open={followingDialogOpen}
+            onOpenChange={setFollowingDialogOpen}
+            userId={profile.id}
+            type="following"
+            initialCount={stats.following}
+          />
+        </>
+      )}
     </div>
   );
 }
