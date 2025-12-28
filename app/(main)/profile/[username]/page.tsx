@@ -316,14 +316,19 @@ export default function ProfilePage() {
                     <div className="text-2xl font-bold">{stats.wishlists}</div>
                     <div className="text-sm text-muted-foreground">Wishlists</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{stats.followers}</div>
-                    <div className="text-sm text-muted-foreground">Followers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{stats.following}</div>
-                    <div className="text-sm text-muted-foreground">Following</div>
-                  </div>
+                  {/* Followers/Following visibles uniquement sur son propre profil */}
+                  {isOwnProfile && (
+                    <>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{stats.followers}</div>
+                        <div className="text-sm text-muted-foreground">Followers</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">{stats.following}</div>
+                        <div className="text-sm text-muted-foreground">Following</div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
