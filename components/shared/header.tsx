@@ -55,7 +55,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background pt-safe">
-      <div className="container mx-auto px-4 pt-6">
+      <div className="container mx-auto px-4 pt-8">
         <div className="flex h-12 items-center justify-between max-w-6xl mx-auto">
           {/* Logo */}
           <Link href="/feed" className="flex items-center space-x-2 flex-shrink-0">
@@ -238,13 +238,63 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link href={`/profile/${user.user_metadata?.username}`} className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
-                        Profil
+                        Mon profil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/wishlists" className="cursor-pointer">
+                        <Heart className="mr-2 h-4 w-4" />
+                        Mes wishlists
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/profile/${user.user_metadata?.username}?tab=shopping`} className="cursor-pointer">
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Mes achats
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Paramètres
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/reset-password" className="cursor-pointer">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Changer le mot de passe
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/about" className="cursor-pointer">
+                        <Info className="mr-2 h-4 w-4" />
+                        À propos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/privacy" className="cursor-pointer">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Confidentialité
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/contact" className="cursor-pointer">
+                        <Mail className="mr-2 h-4 w-4" />
+                        Contact
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/legal" className="cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Mentions légales
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
                       <LogOut className="mr-2 h-4 w-4" />
-                      Déconnexion
+                      Se déconnecter
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
