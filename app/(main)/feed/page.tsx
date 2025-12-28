@@ -161,12 +161,10 @@ export default function FeedPage() {
 
     try {
       let allItems: any[] = [];
+      let followedIds: string[] = [];
 
-      // First, get list of wishlists to filter items from
-      let wishlistIds: string[] = [];
-
+      // Get followed users if in "following" mode
       if (feedType === 'following' && currentUser) {
-        // Get followed users
         const { data: followedUsers } = await supabase
           .from('followers')
           .select('following_id')
@@ -178,26 +176,49 @@ export default function FeedPage() {
           return;
         }
 
-        const followedIds = followedUsers.map((f) => f.following_id);
-
-        // Get wishlists from followed users
-        const { data: wishlists } = await supabase
-          .from('wishlists')
-          .select('id')
-          .in('user_id', followedIds)
-          .eq('is_public', true);
-
-        wishlistIds = wishlists?.map((w) => w.id) || [];
-
-        if (wishlistIds.length === 0) {
-          setItems([]);
-          setIsLoading(false);
-          return;
-        }
+        followedIds = followedUsers.map((f) => f.following_id);
       }
 
-      // Build query for PUBLIC items from community
-      let publicQuery = supabase
+      // 1. Load standalone PRODUCTS from products table
+      let productsQuery = supabase
+        .from('products')
+        .select(`
+          *,
+          profile:profiles!products_user_id_fkey(id, username, full_name, avatar_url)
+        `)
+        .eq('is_public', true);
+
+      // Filter by followed users if needed
+      if (feedType === 'following' && followedIds.length > 0) {
+        productsQuery = productsQuery.in('user_id', followedIds);
+      }
+
+      // Filter by category if selected
+      if (selectedCategory) {
+        productsQuery = productsQuery.eq('category', selectedCategory);
+      }
+
+      const { data: productsData, error: productsError } = await productsQuery
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (productsError) {
+        console.error('Error loading products:', productsError);
+      } else {
+        // Transform products to match wishlist_items format
+        const transformedProducts = (productsData || []).map((product) => ({
+          ...product,
+          wishlist: {
+            profile: product.profile,
+            list_type: product.product_type,
+            category: product.category,
+          },
+        }));
+        allItems = [...allItems, ...transformedProducts];
+      }
+
+      // 2. Load wishlist items from wishlists
+      let wishlistItemsQuery = supabase
         .from('wishlist_items')
         .select(`
           *,
@@ -215,27 +236,69 @@ export default function FeedPage() {
         .eq('wishlist.is_public', true);
 
       // Filter by followed users if needed
-      if (feedType === 'following' && wishlistIds.length > 0) {
-        publicQuery = publicQuery.in('wishlist_id', wishlistIds);
+      if (feedType === 'following' && followedIds.length > 0) {
+        // Get wishlists from followed users
+        const { data: wishlists } = await supabase
+          .from('wishlists')
+          .select('id')
+          .in('user_id', followedIds)
+          .eq('is_public', true);
+
+        const wishlistIds = wishlists?.map((w) => w.id) || [];
+        if (wishlistIds.length > 0) {
+          wishlistItemsQuery = wishlistItemsQuery.in('wishlist_id', wishlistIds);
+        }
       }
 
       // Filter by category if selected
       if (selectedCategory) {
-        publicQuery = publicQuery.eq('wishlist.category', selectedCategory);
+        wishlistItemsQuery = wishlistItemsQuery.eq('wishlist.category', selectedCategory);
       }
 
-      const { data: publicData, error: publicError } = await publicQuery
+      const { data: wishlistItemsData, error: wishlistItemsError } = await wishlistItemsQuery
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(50);
 
-      if (publicError) {
-        console.error('Error loading public items:', publicError);
+      if (wishlistItemsError) {
+        console.error('Error loading wishlist items:', wishlistItemsError);
       } else {
-        allItems = publicData || [];
+        allItems = [...allItems, ...(wishlistItemsData || [])];
       }
 
       // Also load user's OWN items (public AND private)
       if (currentUser) {
+        // Load user's own standalone products
+        let userProductsQuery = supabase
+          .from('products')
+          .select(`
+            *,
+            profile:profiles!products_user_id_fkey(id, username, full_name, avatar_url)
+          `)
+          .eq('user_id', currentUser.id);
+
+        if (selectedCategory) {
+          userProductsQuery = userProductsQuery.eq('category', selectedCategory);
+        }
+
+        const { data: userProductsData, error: userProductsError } = await userProductsQuery
+          .order('created_at', { ascending: false });
+
+        if (!userProductsError && userProductsData) {
+          const transformedUserProducts = userProductsData.map((product) => ({
+            ...product,
+            wishlist: {
+              profile: product.profile,
+              list_type: product.product_type,
+              category: product.category,
+            },
+          }));
+
+          const publicItemIds = new Set(allItems.map((item) => item.id));
+          const uniqueUserProducts = transformedUserProducts.filter((item) => !publicItemIds.has(item.id));
+          allItems = [...uniqueUserProducts, ...allItems];
+        }
+
+        // Load user's wishlist items
         const { data: userWishlists } = await supabase
           .from('wishlists')
           .select('id')

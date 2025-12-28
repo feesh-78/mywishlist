@@ -29,6 +29,7 @@ import {
   Info,
   Shield,
   Mail,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/notification-center';
@@ -192,6 +193,12 @@ export function Header() {
                       <Link href="/settings/contact" className="cursor-pointer">
                         <Mail className="mr-2 h-4 w-4" />
                         Contact
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/legal" className="cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Mentions légales
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
