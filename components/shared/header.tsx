@@ -50,9 +50,9 @@ export function Header() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between max-w-6xl mx-auto">
+    <header className="sticky top-0 z-50 w-full border-b bg-background pt-safe">
+      <div className="container mx-auto px-4 pt-2">
+        <div className="flex h-14 items-center justify-between max-w-6xl mx-auto">
           {/* Logo */}
           <Link href="/feed" className="flex items-center space-x-2 flex-shrink-0">
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
