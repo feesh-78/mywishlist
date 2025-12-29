@@ -18,7 +18,6 @@ import { useToast } from '@/lib/hooks/use-toast';
 import {
   Heart,
   Home,
-  PlusSquare,
   Settings,
   LogOut,
   User,
@@ -114,13 +113,6 @@ export function Header() {
                 >
                   <Search className={cn("h-6 w-6", isActive('/search') && "fill-current")} />
                 </Link>
-                <Link
-                  href="/items/new"
-                  className="transition-colors hover:text-primary"
-                  title="Ajouter un item"
-                >
-                  <PlusSquare className="h-6 w-6" />
-                </Link>
                 {/* <NotificationCenter userId={user.id} /> */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -212,9 +204,6 @@ export function Header() {
 
               {/* Mobile Navigation */}
               <div className="flex md:hidden items-center gap-4">
-                <Link href="/items/new" title="Ajouter un item">
-                  <PlusSquare className="h-6 w-6" />
-                </Link>
                 {/* <NotificationCenter userId={user.id} /> */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
