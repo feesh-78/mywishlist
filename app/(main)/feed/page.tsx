@@ -632,7 +632,7 @@ export default function FeedPage() {
                 </div>
               ) : (
                 /* Grille 3 colonnes */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                   {items.map((item) => {
                     const isLiked = likedItems.has(item.id);
                     const isBookmarked = bookmarkedItems.has(item.id);
@@ -640,21 +640,21 @@ export default function FeedPage() {
                     const isShoppingItem = listType === 'shopping_list';
 
                     return (
-                      <Card
-                        key={item.id}
-                        ref={getViewRef(item.id)}
-                        className="overflow-hidden hover:shadow-lg transition-shadow group flex flex-col"
-                      >
-                        {/* Image */}
-                        {item.image_url && (
-                          <div className="relative aspect-square overflow-hidden">
-                            <Image
-                              src={item.image_url}
-                              alt={item.title}
-                              width={400}
-                              height={400}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                      <Link key={item.id} href={`/product/${item.id}`}>
+                        <Card
+                          ref={getViewRef(item.id)}
+                          className="overflow-hidden hover:shadow-lg transition-shadow group flex flex-col cursor-pointer"
+                        >
+                          {/* Image */}
+                          {item.image_url && (
+                            <div className="relative aspect-square overflow-hidden">
+                              <Image
+                                src={item.image_url}
+                                alt={item.title}
+                                width={400}
+                                height={400}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
                             {/* Type badge overlay */}
                             <div className="absolute top-2 right-2">
                               <Badge
@@ -691,6 +691,7 @@ export default function FeedPage() {
                           <Link
                             href={`/profile/${item.wishlist?.profile?.username}`}
                             className="flex items-center gap-2 mb-3 hover:opacity-80"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Avatar className="h-7 w-7">
                               <AvatarImage src={item.wishlist?.profile?.avatar_url} />
@@ -715,18 +716,15 @@ export default function FeedPage() {
 
                           {/* Collection/Category */}
                           {item.wishlist?.category && (
-                            <Link href={`/wishlists/${item.wishlist.slug}`}>
+                            <Link
+                              href={`/wishlists/${item.wishlist.slug}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Badge variant="outline" className="mb-2 text-xs">
                                 <Hash className="h-3 w-3 mr-1" />
                                 {item.wishlist.category}
                               </Badge>
                             </Link>
-                          )}
-
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2 flex-1">
-                              {item.description}
-                            </p>
                           )}
 
                           {/* Actions */}
@@ -736,7 +734,11 @@ export default function FeedPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 px-2"
-                                onClick={() => handleLike(item.id, isLiked)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleLike(item.id, isLiked);
+                                }}
                               >
                                 <Heart
                                   className={`h-3 w-3 mr-1 ${
@@ -751,7 +753,12 @@ export default function FeedPage() {
                                   className="h-7 px-2"
                                   asChild
                                 >
-                                  <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <ExternalLink className="h-3 w-3" />
                                   </a>
                                 </Button>
@@ -762,7 +769,11 @@ export default function FeedPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7"
-                                onClick={() => handleShare(item)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleShare(item);
+                                }}
                               >
                                 <Share2 className="h-3 w-3" />
                               </Button>
@@ -770,7 +781,11 @@ export default function FeedPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7"
-                                onClick={() => handleBookmark(item.id, isBookmarked)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleBookmark(item.id, isBookmarked);
+                                }}
                               >
                                 <Bookmark
                                   className={`h-3 w-3 ${
@@ -781,7 +796,8 @@ export default function FeedPage() {
                             </div>
                           </div>
                         </CardContent>
-                      </Card>
+                        </Card>
+                      </Link>
                     );
                   })}
                 </div>
