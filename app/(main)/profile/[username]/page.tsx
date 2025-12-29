@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { FollowersDialog } from '@/components/profile/followers-dialog';
 import { CoverPhotoUpload } from '@/components/profile/cover-photo-upload';
 import { AvatarUpload } from '@/components/profile/avatar-upload';
+import { AvatarViewDialog } from '@/components/profile/avatar-view-dialog';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -46,6 +47,7 @@ export default function ProfilePage() {
   const [productFilter, setProductFilter] = useState<'all' | 'wishlist' | 'purchased'>('all');
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
+  const [avatarViewOpen, setAvatarViewOpen] = useState(false);
 
   const isOwnProfile = currentUser?.user_metadata?.username === username;
   const defaultTab = searchParams.get('tab') || 'products';
@@ -278,14 +280,21 @@ export default function ProfilePage() {
                   currentAvatarUrl={profile.avatar_url}
                   username={profile.username}
                   onUpdate={(url) => setProfile({ ...profile, avatar_url: url })}
+                  onView={() => profile.avatar_url && setAvatarViewOpen(true)}
                 />
               ) : (
-                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background">
-                  <AvatarImage src={profile.avatar_url} alt={profile.username} />
-                  <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl">
-                    {profile.username?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => profile.avatar_url && setAvatarViewOpen(true)}
+                  title="Voir la photo de profil"
+                >
+                  <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background">
+                    <AvatarImage src={profile.avatar_url} alt={profile.username} />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-2xl">
+                      {profile.username?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
               )}
 
               {/* Profile Info */}
@@ -660,6 +669,12 @@ export default function ProfilePage() {
             userId={profile.id}
             type="following"
             initialCount={stats.following}
+          />
+          <AvatarViewDialog
+            open={avatarViewOpen}
+            onOpenChange={setAvatarViewOpen}
+            avatarUrl={profile.avatar_url}
+            username={profile.username}
           />
         </>
       )}

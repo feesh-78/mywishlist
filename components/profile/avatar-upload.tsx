@@ -12,9 +12,10 @@ interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
   username: string;
   onUpdate: (url: string) => void;
+  onView?: () => void;
 }
 
-export function AvatarUpload({ userId, currentAvatarUrl, username, onUpdate }: AvatarUploadProps) {
+export function AvatarUpload({ userId, currentAvatarUrl, username, onUpdate, onView }: AvatarUploadProps) {
   const [previewUrl, setPreviewUrl] = useState(currentAvatarUrl);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>('');
@@ -105,15 +106,29 @@ export function AvatarUpload({ userId, currentAvatarUrl, username, onUpdate }: A
 
   return (
     <>
-      <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-        <Avatar className="h-32 w-32 border-4 border-background">
-          <AvatarImage src={previewUrl || ''} alt={username} />
-          <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-3xl">
-            {username?.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+      <div className="relative group">
+        <div
+          className="cursor-pointer"
+          onClick={(e) => {
+            if (onView && previewUrl && !(e.target as HTMLElement).closest('.camera-button')) {
+              onView();
+            }
+          }}
+          title="Voir la photo de profil"
+        >
+          <Avatar className="h-32 w-32 border-4 border-background">
+            <AvatarImage src={previewUrl || ''} alt={username} />
+            <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-3xl">
+              {username?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </div>
 
-        <div className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+        <div
+          className="camera-button absolute bottom-0 right-0 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform cursor-pointer"
+          onClick={() => fileInputRef.current?.click()}
+          title="Changer la photo de profil"
+        >
           <Camera className="h-5 w-5" />
         </div>
       </div>
